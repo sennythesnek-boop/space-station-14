@@ -1,0 +1,68 @@
+name: ISS14 Build and Deploy
+
+on:
+  push:
+    branches:
+      - release
+    tags:
+      - '^(release)( )([0-9]+\.[0-9]+\.[0-9]+)$'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4.2.2
+      with:
+        submodules: 'recursive'
+    
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4.1.0
+      with:
+        dotnet-version: 9.0.x
+      
+    - name: Get Engine Tag
+      run: |
+        cd RobustToolbox
+        git fetch --depth=1
+    
+    - name: Install dependencies
+      run: dotnet restore
+      
+    - name: Build Packaging Tool
+      run: dotnet build Content.Packaging --configuration Release
+
+    - name: Package Server
+      run: dotnet run --project Content.Packaging server --hybrid-acz --platform linux-x64
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-zip
+        path: release/SS14.Server_linux-x64.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-zip
+          path: ./downloaded-artifact
+
+      - name: Create SSH key file
+        env:
+          SSH_KEY_ED25519: ${{ secrets.SSH_KEY_ED25519 }}
+        run: echo "$SSH_KEY_ED25519" > ssh_key && chmod 600 ssh_key
+
+      - name: Prepare Deployment (Stop & Backup)
+        run: |
+          ssh -p 18281 -i ssh_key -o StrictHostKeyChecking=no deploy@lemonsquizy.com "/home/iss14/tools/prepare_deploy.sh"
+
+      - name: Copy Zip to Server
+        run: |
+          scp -P 18281 -i ssh_key ./downloaded-artifact/SS14.Server_linux-x64.zip deploy@lemonsquizy.com:/home/iss14/server/
+        
+      - name: Finalize Deployment (Unzip, Restore & Start)
+        run: |
+          ssh -p 18281 -i ssh_key -o StrictHostKeyChecking=no deploy@lemonsquizy.com "/home/iss14/tools/finalize_deploy.sh"

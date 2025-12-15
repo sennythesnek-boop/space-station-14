@@ -2,15 +2,173 @@
   id: Reduced
   jobs:
     Captain:
-    - !type:DepartmentTimeRequirement
-      department: Engineering
+    - !type:RoleTimeRequirement
+      role: JobHeadOfSecurity
       time: 1h
+    - !type:RoleTimeRequirement
+      role: JobQuartermaster
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobChiefEngineer
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobChiefMedicalOfficer
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobResearchDirector
+      time: 1h
+    HeadOfPersonnel:
     - !type:DepartmentTimeRequirement
-      department: Medical
+      department: Civilian
+      time: 5h
+      
+#Security jobs
+    HeadOfSecurity:
+    - !type:RoleTimeRequirement
+      role: JobWarden
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobDetective
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobSecurityOfficer
       time: 1h
     - !type:DepartmentTimeRequirement
       department: Security
-      time: 1h
+      time: 5h
+    Warden:
     - !type:DepartmentTimeRequirement
-      department: Command
+      department: Security
+      time: 3h
+    Detective:
+    - !type:RoleTimeRequirement
+      role: JobSecurityOfficer
       time: 1h
+    SecurityOfficer:
+    - !type:RoleTimeRequirement
+      role: JobSecurityCadet
+      time: 1h
+    SecurityCadet:
+    - !type:OverallPlaytimeRequirement
+      time: 2h
+
+#Cargo jobs
+    Quartermaster:
+    - !type:RoleTimeRequirement
+      role: JobCargoTechnician
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobSalvageSpecialist
+      time: 1h
+    CargoTechnician:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    SalvageSpecialist:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+
+#Engineering jobs
+    ChiefEngineer:
+    - !type:RoleTimeRequirement
+      role: JobAtmosphericTechnician
+      time: 1h
+    - !type:RoleTimeRequirement
+      role: JobStationEngineer
+      time: 1h
+    AtmosphericTechnician:
+    - !type:RoleTimeRequirement
+      role: JobStationEngineer
+      time: 1h
+    StationEngineer:
+    - !type:RoleTimeRequirement
+      role: JobTechnicalAssistant
+      time: 1h
+    TechnicalAssistant:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+
+#Medical jobs
+    ChiefMedicalOfficer:
+    - !type:RoleTimeRequirement
+      role: JobChemist
+      time: 2h
+    - !type:RoleTimeRequirement
+      role: JobMedicalDoctor
+      time: 2h
+    Chemist:
+    - !type:DepartmentTimeRequirement
+      department: Medical
+      time: 2h
+    MedicalDoctor:
+    - !type:DepartmentTimeRequirement
+      department: Medical
+      time: 3h
+    - !type:RoleTimeRequirement
+      role: JobMedicalIntern
+      time: 1h
+    MedicalIntern:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Paramedic:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Psychologist:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+
+#Science job
+    ResearchDirector:
+    - !type:RoleTimeRequirement
+      role: JobScientist
+      time: 2h
+    Scientist:
+    - !type:RoleTimeRequirement
+      role: JobResearchAssistant
+      time: 1h
+      
+#Sillicon jobs
+    StationAi:
+    - !type:OverallPlaytimeRequirement
+      time: 1h
+    Borg:
+    - !type:OverallPlaytimeRequirement
+      time: 1h
+
+#Civilian jobs
+    Bartender:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Botanist:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Chaplain:
+    Chef:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Clown:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Janitor:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Lawyer:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Librarian:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Mime:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Musician:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Passenger:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    Reporter:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
+    ServiceWorker:
+    - !type:OverallPlaytimeRequirement
+      time: 0h
