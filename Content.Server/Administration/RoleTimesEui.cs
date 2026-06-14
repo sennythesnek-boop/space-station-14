@@ -21,19 +21,21 @@ namespace Content.Server.Administration;
 /// (online via <see cref="PlayTimeTrackingManager"/>, offline straight from the database) and lets
 /// an admin set any tracker to an absolute value.
 /// </summary>
-public sealed class RoleTimesEui : BaseEui
+public sealed partial class RoleTimesEui : BaseEui
 {
-    [Dependency] private readonly IAdminManager _admins = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly PlayTimeTrackingManager _playTime = default!;
-    [Dependency] private readonly IServerDbManager _db = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IAdminLogManager _adminLog = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
+#pragma warning disable IDE0044 // injected by [Dependency]
+    [Dependency] private IAdminManager _admins = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private PlayTimeTrackingManager _playTime = default!;
+    [Dependency] private IServerDbManager _db = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IAdminLogManager _adminLog = default!;
+    [Dependency] private IEntityManager _entity = default!;
+#pragma warning restore IDE0044
 
     private readonly LocatedPlayerData _target;
     private bool _online;
-    private List<RoleTimeInfo> _roles = new();
+    private List<RoleTimeInfo> _roles = [];
 
     public RoleTimesEui(LocatedPlayerData target)
     {
@@ -64,8 +66,15 @@ public sealed class RoleTimesEui : BaseEui
         return new RoleTimesEuiState(_target.UserId, _target.Username, _online, CanEdit(), _roles);
     }
 
-    private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
-    private bool CanEdit() => _admins.HasAdminFlag(Player, AdminFlags.Permissions);
+    private bool CanView()
+    {
+        return _admins.HasAdminFlag(Player, AdminFlags.Admin);
+    }
+
+    private bool CanEdit()
+    {
+        return _admins.HasAdminFlag(Player, AdminFlags.Permissions);
+    }
 
     /// <summary>
     /// (Re)load all tracker times for the target player and push them to the client.
@@ -193,7 +202,7 @@ public sealed class RoleTimesEui : BaseEui
         {
             // Offline: no in-memory state, so write the absolute value straight to the DB.
             // UpdatePlayTimes does a replace (not an increment), which is exactly what we want.
-            _ = _db.UpdatePlayTimes(new[] { new PlayTimeUpdate(_target.UserId, set.Tracker, time) });
+            _ = _db.UpdatePlayTimes([new PlayTimeUpdate(_target.UserId, set.Tracker, time)]);
         }
 
         _adminLog.Add(LogType.Action, LogImpact.Medium,
