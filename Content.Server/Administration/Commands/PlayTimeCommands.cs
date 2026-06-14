@@ -1,5 +1,6 @@
 ﻿using Content.Server.Players.PlayTimeTracking;
 using Content.Shared.Administration;
+using Content.Shared.Localizations;
 using Content.Shared.Players.PlayTimeTracking;
 using Robust.Server.Player;
 using Robust.Shared.Console;
@@ -42,7 +43,7 @@ public sealed class PlayTimeAddOverallCommand : IConsoleCommand
         shell.WriteLine(Loc.GetString(
             "cmd-playtime_addoverall-succeed",
             ("username", args[0]),
-            ("time", overall)));
+            ("time", ContentLocalizationManager.FormatPlaytime(overall))));
     }
 
     public CompletionResult GetCompletion(IConsoleShell shell, string[] args)
@@ -97,7 +98,7 @@ public sealed class PlayTimeAddRoleCommand : IConsoleCommand
         shell.WriteLine(Loc.GetString("cmd-playtime_addrole-succeed",
             ("username", userName),
             ("role", role),
-            ("time", time)));
+            ("time", ContentLocalizationManager.FormatPlaytime(time))));
     }
 
     public CompletionResult GetCompletion(IConsoleShell shell, string[] args)
@@ -152,7 +153,7 @@ public sealed class PlayTimeGetOverallCommand : IConsoleCommand
         shell.WriteLine(Loc.GetString(
             "cmd-playtime_getoverall-success",
             ("username", userName),
-            ("time", value)));
+            ("time", ContentLocalizationManager.FormatPlaytime(value))));
     }
 
     public CompletionResult GetCompletion(IConsoleShell shell, string[] args)
@@ -205,7 +206,9 @@ public sealed class PlayTimeGetRoleCommand : IConsoleCommand
 
             foreach (var (role, time) in timers)
             {
-                shell.WriteLine(Loc.GetString("cmd-playtime_getrole-role", ("role", role), ("time", time)));
+                shell.WriteLine(Loc.GetString("cmd-playtime_getrole-role",
+                    ("role", role),
+                    ("time", ContentLocalizationManager.FormatPlaytime(time))));
             }
         }
 
@@ -214,13 +217,15 @@ public sealed class PlayTimeGetRoleCommand : IConsoleCommand
             if (args[1] == "Overall")
             {
                 var timer = _playTimeTracking.GetOverallPlaytime(session);
-                shell.WriteLine(Loc.GetString("cmd-playtime_getrole-overall", ("time", timer)));
+                shell.WriteLine(Loc.GetString("cmd-playtime_getrole-overall",
+                    ("time", ContentLocalizationManager.FormatPlaytime(timer))));
                 return;
             }
 
             var time = _playTimeTracking.GetPlayTimeForTracker(session, args[1]);
-            shell.WriteLine(Loc.GetString("cmd-playtime_getrole-succeed", ("username", session.Name),
-                ("time", time)));
+            shell.WriteLine(Loc.GetString("cmd-playtime_getrole-succeed",
+                ("username", session.Name),
+                ("time", ContentLocalizationManager.FormatPlaytime(time))));
         }
     }
 

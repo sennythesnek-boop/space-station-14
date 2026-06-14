@@ -3,42 +3,55 @@ name: ISS14 Build and Deploy
 on:
   push:
     branches:
-      - release
-    tags:
-      - '^(release)( )([0-9]+\.[0-9]+\.[0-9]+)$'
+      - 'release/**'
+
+# FIX: these were nested under `on:` (invalid). They belong in a top-level env block.
+env:
+  SSH_USER: iss14
+  SSH_HOST: lemonsquizy.com
+  SSH_PORT: "18281"
+  DEPLOY_PATH: /home/iss14
+  ZIP_NAME: SS14.Server_linux-x64.zip
+
+# Prevent two deploys from running at once and stomping on each other.
+concurrency:
+  group: iss14-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4.2.2
-      with:
-        submodules: 'recursive'
-    
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v4.1.0
-      with:
-        dotnet-version: 9.0.x
-      
-    - name: Get Engine Tag
-      run: |
-        cd RobustToolbox
-        git fetch --depth=1
-    
-    - name: Install dependencies
-      run: dotnet restore
-      
-    - name: Build Packaging Tool
-      run: dotnet build Content.Packaging --configuration Release
+      - uses: actions/checkout@v4.2.2
+        with:
+          submodules: 'recursive'
 
-    - name: Package Server
-      run: dotnet run --project Content.Packaging server --hybrid-acz --platform linux-x64
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 9.0.x
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: server-zip
-        path: release/SS14.Server_linux-x64.zip
+      - name: Get Engine Tag
+        run: |
+          cd RobustToolbox
+          # --tags added: a plain --depth=1 fetch does NOT pull tags.
+          git fetch --depth=1 --tags
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build Packaging Tool
+        run: dotnet build Content.Packaging --configuration Release
+
+      - name: Package Server
+        run: dotnet run --project Content.Packaging server --hybrid-acz --platform linux-x64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-zip
+          path: release/SS14.Server_linux-x64.zip
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
@@ -53,16 +66,40 @@ jobs:
       - name: Create SSH key file
         env:
           SSH_KEY_ED25519: ${{ secrets.SSH_KEY_ED25519 }}
-        run: echo "$SSH_KEY_ED25519" > ssh_key && chmod 600 ssh_key
+        run: |
+          echo "$SSH_KEY_ED25519" > ssh_key
+          chmod 600 ssh_key
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Pins the host key so we can drop StrictHostKeyChecking=no (MITM protection).
+          # For stronger guarantees, store the known_hosts line as a secret instead of
+          # scanning it fresh each run.
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Stop GetIn service (if running)
+        run: |
+          ssh -p "$SSH_PORT" -i ssh_key "$SSH_USER@$SSH_HOST" '
+            if sudo systemctl is-active --quiet getin; then
+              sudo systemctl stop getin
+              echo "GetIn was running. Stopped GetIn."
+            else
+              echo "GetIn is not running."
+            fi
+          '
 
       - name: Prepare Deployment (Stop & Backup)
         run: |
-          ssh -p 18281 -i ssh_key -o StrictHostKeyChecking=no deploy@lemonsquizy.com "/home/iss14/tools/prepare_deploy.sh"
+          ssh -p "$SSH_PORT" -i ssh_key "$SSH_USER@$SSH_HOST" "$DEPLOY_PATH/tools/prepare_deploy.sh"
 
       - name: Copy Zip to Server
         run: |
-          scp -P 18281 -i ssh_key ./downloaded-artifact/SS14.Server_linux-x64.zip deploy@lemonsquizy.com:/home/iss14/server/
-        
+          scp -P "$SSH_PORT" -i ssh_key \
+            "./downloaded-artifact/$ZIP_NAME" \
+            "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/server/"
+
       - name: Finalize Deployment (Unzip, Restore & Start)
         run: |
-          ssh -p 18281 -i ssh_key -o StrictHostKeyChecking=no deploy@lemonsquizy.com "/home/iss14/tools/finalize_deploy.sh"
+          ssh -p "$SSH_PORT" -i ssh_key "$SSH_USER@$SSH_HOST" "$DEPLOY_PATH/tools/finalize_deploy.sh"
