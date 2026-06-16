@@ -30,11 +30,19 @@ public sealed class RoleTimesEuiState(
 }
 
 /// <summary>
-/// A single tracker row: the raw tracker id, a friendly display name, the accumulated time, and an
-/// optional human-readable summary of the play time requirements gating the associated job.
+/// A single tracker row: the raw tracker id, a friendly display name, the accumulated time, an
+/// optional human-readable summary of the play time requirements gating the associated job, and the
+/// department it belongs to (for grouping the overview the same way the lobby does).
 /// </summary>
 [Serializable, NetSerializable]
-public struct RoleTimeInfo(string tracker, string displayName, TimeSpan time, string? requirement)
+public struct RoleTimeInfo(
+    string tracker,
+    string displayName,
+    TimeSpan time,
+    string? requirement,
+    string? departmentName,
+    string departmentColor,
+    int departmentWeight)
 {
     public string Tracker = tracker;
     public string DisplayName = displayName;
@@ -42,6 +50,15 @@ public struct RoleTimeInfo(string tracker, string displayName, TimeSpan time, st
 
     /// <summary>Pre-formatted "Requires: ..." text, or null if the role has no time requirements.</summary>
     public string? Requirement = requirement;
+
+    /// <summary>Localized department name, or null for trackers with no department (e.g. Overall).</summary>
+    public string? DepartmentName = departmentName;
+
+    /// <summary>Department color as a hex string, used for the group header.</summary>
+    public string DepartmentColor = departmentColor;
+
+    /// <summary>Department sort weight (higher sorts first); ignored for the catch-all group.</summary>
+    public int DepartmentWeight = departmentWeight;
 }
 
 /// <summary>

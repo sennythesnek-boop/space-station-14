@@ -1,0 +1,26 @@
+<ui:FancyWindow xmlns="https://spacestation14.io"
+                xmlns:ui="clr-namespace:Content.Client.UserInterface.Controls"
+                Title="{Loc role-req-editor-title}"
+                MinSize="640 480"
+                SetSize="720 660">
+    <PanelContainer StyleClasses="BackgroundDark">
+        <BoxContainer Orientation="Vertical" Margin="4">
+            <BoxContainer Orientation="Horizontal">
+                <CheckBox Name="TimersCheck" Text="{Loc role-req-editor-no-reqs}" />
+                <CheckBox Name="OverridesCheck" Text="{Loc role-req-editor-overrides}" Margin="12 0 0 0" />
+            </BoxContainer>
+            <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                <OptionButton Name="ProfileOption" MinWidth="140" />
+                <Button Name="LoadButton" Text="{Loc role-req-editor-profile-load}" Margin="4 0 0 0" />
+                <Button Name="DeleteButton" Text="{Loc role-req-editor-profile-delete}" Margin="4 0 0 0" />
+                <LineEdit Name="ProfileName" PlaceHolder="{Loc role-req-editor-profile-name}" MinWidth="120" HorizontalExpand="True" Margin="8 0 0 0" />
+                <Button Name="SaveButton" Text="{Loc role-req-editor-profile-save}" Margin="4 0 0 0" />
+                <Button Name="BackupButton" Text="{Loc role-req-editor-profile-backup}" Margin="4 0 0 0" />
+            </BoxContainer>
+            <LineEdit Name="SearchBar" PlaceHolder="{Loc role-times-search-placeholder}" Margin="0 4 0 4" />
+            <ScrollContainer VerticalExpand="True" HorizontalExpand="True" HScrollEnabled="False">
+                <BoxContainer Name="JobsContainer" Orientation="Vertical" Access="Public" VerticalExpand="True" />
+            </ScrollContainer>
+        </BoxContainer>
+    </PanelContainer>
+</ui:FancyWindow>

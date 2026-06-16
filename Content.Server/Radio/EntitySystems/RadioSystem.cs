@@ -5,8 +5,10 @@ using Content.Server.Ghost;
 using Content.Server.Power.Components;
 using Content.Shared.Chat;
 using Content.Shared.Database;
+using Content.Shared.Mind;
 using Content.Shared.Radio;
 using Content.Shared.Radio.Components;
+using Content.Shared.Roles.Jobs;
 using Content.Shared.Speech;
 using Robust.Shared.Map;
 using Robust.Shared.Network;
@@ -31,6 +33,8 @@ public sealed partial class RadioSystem : EntitySystem
     [Dependency] private ChatSystem _chat = default!;
     [Dependency] private IChatManager _chatManager = default!;
     [Dependency] private GhostSystem _ghost = default!;
+    [Dependency] private SharedMindSystem _mind = default!;
+    [Dependency] private SharedJobSystem _jobs = default!;
     [Dependency] private EntityQuery<TelecomExemptComponent> _exemptQuery = default!;
 
     // set used to prevent radio feedback loops.
@@ -99,6 +103,14 @@ public sealed partial class RadioSystem : EntitySystem
 
         var name = evt.VoiceName;
         name = FormattedMessage.EscapeText(name);
+
+        // Prepend the speaker's job icon before their name (skipped for antags / entities with no job role).
+        if (_mind.TryGetMind(messageSource, out var mindId, out _)
+            && _jobs.MindTryGetJobId(mindId, out var jobProtoId)
+            && jobProtoId is { } jobId)
+        {
+            name = ChatIconTokens.JobIconMarkup(jobId.Id) + " " + name;
+        }
 
         SpeechVerbPrototype speech;
         if (evt.SpeechVerb != null && _prototype.Resolve(evt.SpeechVerb, out var evntProto))

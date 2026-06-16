@@ -11,6 +11,7 @@ using Content.Shared.Localizations;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Roles;
 using Robust.Server.Player;
+using Robust.Shared.Maths;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
@@ -95,6 +96,18 @@ public sealed partial class RoleTimesEui : BaseEui
                 trackerToJob[job.PlayTimeTracker] = job;
         }
 
+        // Map each job to a department, preferring the job's primary department, so we can group the
+        // overview the same way the lobby does.
+        var jobToDept = new Dictionary<string, DepartmentPrototype>();
+        foreach (var dept in _proto.EnumeratePrototypes<DepartmentPrototype>())
+        {
+            foreach (var jobId in dept.Roles)
+            {
+                if (!jobToDept.TryGetValue(jobId.Id, out var existing) || (dept.Primary && !existing.Primary))
+                    jobToDept[jobId.Id] = dept;
+            }
+        }
+
         var roleSystem = _entity.System<SharedRoleSystem>();
 
         // Pull current times: live in-memory values for online players, otherwise from the DB.
@@ -126,7 +139,19 @@ public sealed partial class RoleTimesEui : BaseEui
             var hasJob = trackerToJob.TryGetValue(tracker, out var job);
             var name = hasJob ? job!.LocalizedName : tracker;
             var requirement = hasJob ? SummarizeRequirements(roleSystem.GetRoleRequirements(job!), trackerToJob) : null;
-            roles.Add(new RoleTimeInfo(tracker, name, times.GetValueOrDefault(tracker), requirement));
+
+            string? deptName = null;
+            var deptColor = Color.Gray.ToHex();
+            var deptWeight = int.MinValue;
+            if (hasJob && jobToDept.TryGetValue(job!.ID, out var dept))
+            {
+                deptName = Loc.GetString(dept.Name);
+                deptColor = dept.Color.ToHex();
+                deptWeight = dept.Weight;
+            }
+
+            roles.Add(new RoleTimeInfo(tracker, name, times.GetValueOrDefault(tracker), requirement,
+                deptName, deptColor, deptWeight));
         }
 
         roles.Sort((a, b) => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase));

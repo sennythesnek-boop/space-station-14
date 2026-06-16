@@ -11,6 +11,7 @@ role-times-title = Role Times
 role-times-search-placeholder = Search roles...
 role-times-status-online = Online
 role-times-status-offline = Offline
+role-times-department-other = Other
 role-times-set-button = Set
 role-times-edit-tooltip = Enter time as HH:MM, or a plain number of minutes.
 

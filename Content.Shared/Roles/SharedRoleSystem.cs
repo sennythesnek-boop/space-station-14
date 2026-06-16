@@ -30,6 +30,21 @@ public abstract partial class SharedRoleSystem : EntitySystem
 
     private JobRequirementOverridePrototype? _requirementOverride;
 
+    /// <summary>
+    /// Runtime, admin-editable, persistent requirement override keyed by job id. Set by the server's
+    /// role requirement override manager. Takes precedence over the CVar-selected prototype override.
+    /// A job present here has its requirements fully replaced by the associated set.
+    /// </summary>
+    private IReadOnlyDictionary<string, HashSet<JobRequirement>>? _runtimeJobOverride;
+
+    /// <summary>
+    /// Installs (or clears, when null) the runtime job requirement override. See <see cref="_runtimeJobOverride"/>.
+    /// </summary>
+    public void SetRuntimeRequirementOverride(IReadOnlyDictionary<string, HashSet<JobRequirement>>? jobs)
+    {
+        _runtimeJobOverride = jobs;
+    }
+
     public override void Initialize()
     {
         Subs.CVar(_cfg, CCVars.GameRoleTimerOverride, SetRequirementOverride, true);
@@ -693,8 +708,19 @@ public abstract partial class SharedRoleSystem : EntitySystem
     /// <summary>
     /// Returns the list of requirements for a role, or null. May be altered by requirement overrides.
     /// </summary>
+    /// <summary>
+    /// Returns a role's pristine requirements, ignoring any runtime or CVar override (the YAML defaults).
+    /// </summary>
+    public HashSet<JobRequirement>? GetDefaultRequirements(JobPrototype job)
+    {
+        return job.Requirements;
+    }
+
     public HashSet<JobRequirement>? GetRoleRequirements(JobPrototype job)
     {
+        if (_runtimeJobOverride != null && _runtimeJobOverride.TryGetValue(job.ID, out var runtimeReq))
+            return runtimeReq;
+
         if (_requirementOverride != null && _requirementOverride.Jobs.TryGetValue(job.ID, out var req))
             return req;
 

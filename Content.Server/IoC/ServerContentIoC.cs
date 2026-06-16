@@ -63,6 +63,7 @@ internal static class ServerContentIoC
         deps.Register<ISharedAdminLogManager, AdminLogManager>();
         deps.Register<IAdminLogManager, AdminLogManager>();
         deps.Register<PlayTimeTrackingManager>();
+        deps.Register<RoleRequirementOverrideManager>();
         deps.Register<UserDbDataManager>();
         deps.Register<ServerInfoManager>();
         deps.Register<DiscordWebhook>();

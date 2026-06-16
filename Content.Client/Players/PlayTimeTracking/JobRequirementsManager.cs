@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Content.Shared.Administration;
 using Content.Shared.CCVar;
 using Content.Shared.Players;
 using Content.Shared.Players.JobWhitelist;
@@ -41,6 +42,7 @@ public sealed partial class JobRequirementsManager : ISharedPlaytimeManager
         _net.RegisterNetMessage<MsgRoleBans>(RxRoleBans);
         _net.RegisterNetMessage<MsgPlayTime>(RxPlayTime);
         _net.RegisterNetMessage<MsgJobWhitelist>(RxJobWhitelist);
+        _net.RegisterNetMessage<MsgRoleRequirementOverride>(RxRoleRequirementOverride);
 
         _client.RunLevelChanged += ClientOnRunLevelChanged;
     }
@@ -91,6 +93,44 @@ public sealed partial class JobRequirementsManager : ISharedPlaytimeManager
         _jobWhitelists.Clear();
         _jobWhitelists.AddRange(message.Whitelist);
         Updated?.Invoke();
+    }
+
+    private void RxRoleRequirementOverride(MsgRoleRequirementOverride message)
+    {
+        // Mirror the server's runtime override onto the client role system so the lobby evaluates the
+        // same requirements the server enforces, and refresh job availability.
+        _entManager.System<SharedRoleSystem>().SetRuntimeRequirementOverride(ParseOverride(message.Data));
+        Updated?.Invoke();
+    }
+
+    private IReadOnlyDictionary<string, HashSet<JobRequirement>>? ParseOverride(string data)
+    {
+        if (string.IsNullOrWhiteSpace(data))
+            return null;
+
+        try
+        {
+            var dtos = RoleRequirementDto.Deserialize(data);
+            var result = new Dictionary<string, HashSet<JobRequirement>>();
+            foreach (var (id, list) in dtos)
+            {
+                var set = new HashSet<JobRequirement>();
+                foreach (var dto in list)
+                {
+                    if (dto.ToRequirement() is { } req)
+                        set.Add(req);
+                }
+
+                result[id] = set;
+            }
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            _sawmill.Error($"Failed to parse replicated role requirement override: {e}");
+            return null;
+        }
     }
 
     /// <summary>

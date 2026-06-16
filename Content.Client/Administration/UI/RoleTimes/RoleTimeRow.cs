@@ -3,6 +3,7 @@ using System.Globalization;
 using Content.Shared.Administration;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Maths;
+using Robust.Shared.Utility;
 
 namespace Content.Client.Administration.UI.RoleTimes;
 
@@ -14,6 +15,9 @@ public sealed class RoleTimeRow : BoxContainer
 {
     /// <summary>Raised with the new absolute time when the admin presses Set.</summary>
     public event Action<TimeSpan>? OnSet;
+
+    /// <summary>Width the requirement text wraps at, sized to fit left of the edit field + button.</summary>
+    private const float RequirementMaxWidth = 340;
 
     private readonly string _tracker;
     private readonly string _displayName;
@@ -50,13 +54,14 @@ public sealed class RoleTimeRow : BoxContainer
 
         if (!string.IsNullOrEmpty(info.Requirement))
         {
-            nameBox.AddChild(new Label
+            // RichTextLabel with a MaxWidth wraps onto multiple lines instead of overflowing the window.
+            var req = new RichTextLabel
             {
-                Text = info.Requirement,
-                ClipText = true,
+                MaxWidth = RequirementMaxWidth,
                 Modulate = Color.DarkGray,
-                ToolTip = info.Requirement,
-            });
+            };
+            req.SetMessage(FormattedMessage.FromUnformatted(info.Requirement));
+            nameBox.AddChild(req);
         }
 
         _edit = new LineEdit
