@@ -102,4 +102,10 @@ jobs:
 
       - name: Finalize Deployment (Unzip, Restore & Start)
         run: |
-          ssh -p "$SSH_PORT" -i ssh_key "$SSH_USER@$SSH_HOST" "$DEPLOY_PATH/tools/finalize_deploy.sh"
+          # The workflow only triggers on release/** branches, so GITHUB_REF_NAME
+          # is "release/<version>". Strip the prefix to get the bare version that
+          # finalize_deploy.sh writes into build.version in server_config.toml.
+          VERSION="${GITHUB_REF_NAME#release/}"
+          echo "Deploying version: $VERSION"
+          ssh -p "$SSH_PORT" -i ssh_key "$SSH_USER@$SSH_HOST" \
+            "$DEPLOY_PATH/tools/finalize_deploy.sh '$VERSION'"
