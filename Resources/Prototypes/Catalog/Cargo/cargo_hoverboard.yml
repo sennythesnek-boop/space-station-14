@@ -1,0 +1,10 @@
+# Makes the hoverboard crate orderable at the cargo console (Fun category).
+- type: cargoProduct
+  id: Hoverboard
+  icon:
+    sprite: Clothing/Shoes/Misc/hoverboard.rsi
+    state: icon
+  product: CrateHoverboard
+  cost: 1500
+  category: cargoproduct-category-name-fun
+  group: market
