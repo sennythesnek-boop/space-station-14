@@ -173,6 +173,13 @@ public sealed partial class GameMapManager : IGameMapManager
 
     public GameMapPrototype? GetSelectedMap()
     {
+        // When an admin runtime map pool is active it is authoritative: ignore the config-forced map
+        // (game.map) so that map votes and random-on-restart selection from the pool take effect.
+        // _selectedMap is set by votemap/forcemap and by SelectMapByConfigRules at round start;
+        // when null (e.g. just after ClearSelectedMap) the round-start flow will pick from the pool.
+        if (_runtimeMapPool != null)
+            return _selectedMap;
+
         return _configSelectedMap ?? _selectedMap;
     }
 

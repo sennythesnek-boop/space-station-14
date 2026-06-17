@@ -40,7 +40,7 @@ public sealed partial class VoteConfigEui : BaseEui
     }
 
     private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
-    private bool CanEdit() => _admins.HasAdminFlag(Player, AdminFlags.Server);
+    private bool CanEdit() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
 
     public override EuiStateBase GetNewState() => _state;
 

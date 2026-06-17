@@ -74,7 +74,7 @@ public sealed partial class RoleTimesEui : BaseEui
 
     private bool CanEdit()
     {
-        return _admins.HasAdminFlag(Player, AdminFlags.Permissions);
+        return _admins.HasAdminFlag(Player, AdminFlags.Admin);
     }
 
     /// <summary>

@@ -13,3 +13,18 @@
   - Exo
   - Snowball
   - Serpentcrest
+- type: gameMapPool
+  id: StanniMapPool
+  maps:
+  - Bagel
+  - Box
+  - Elkridge
+  - Fland
+  - Marathon
+  - Oasis
+  - Packed
+  - Plasma
+  - Reach
+  - Exo
+  - Snowball
+  - Serpentcrest
