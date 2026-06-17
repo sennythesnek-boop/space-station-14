@@ -5,9 +5,9 @@ using Robust.Shared.Console;
 namespace Content.Server.Administration.Commands;
 
 [AdminCommand(AdminFlags.Admin)]
-public sealed class RoleTimeReqsCommand : LocalizedCommands
+public sealed partial class RoleTimeReqsCommand : LocalizedCommands
 {
-    [Dependency] private readonly EuiManager _euis = default!;
+    [Dependency] private EuiManager _euis = default!;
 
     public override string Command => "roletimereqs";
 
