@@ -31,6 +31,7 @@ public sealed class VoteConfigEuiState(
     bool presetVote,
     bool mapVote,
     bool votekickVote,
+    bool filterMapsByPlayerCount,
     List<string> mapProfiles,
     string activeMapProfile,
     List<VoteConfigItem> maps,
@@ -47,6 +48,8 @@ public sealed class VoteConfigEuiState(
     public readonly bool MapVote = mapVote;
     public readonly bool VotekickVote = votekickVote;
 
+    public readonly bool FilterMapsByPlayerCount = filterMapsByPlayerCount;
+
     public readonly List<string> MapProfiles = mapProfiles;
     public readonly string ActiveMapProfile = activeMapProfile;
     public readonly List<VoteConfigItem> Maps = maps;
@@ -62,6 +65,12 @@ public sealed class VoteConfigEuiState(
 public sealed class VoteConfigSetToggleMessage(VoteToggle toggle, bool value) : EuiMessageBase
 {
     public readonly VoteToggle Toggle = toggle;
+    public readonly bool Value = value;
+}
+
+[Serializable, NetSerializable]
+public sealed class VoteConfigSetMapPlayerCountFilterMessage(bool value) : EuiMessageBase
+{
     public readonly bool Value = value;
 }
 

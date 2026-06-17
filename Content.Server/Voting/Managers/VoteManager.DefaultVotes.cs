@@ -601,15 +601,19 @@ namespace Content.Server.Voting.Managers
 
             foreach (var preset in _prototypeManager.EnumeratePrototypes<GamePresetPrototype>())
             {
+                // When an admin gamemode profile is active it is authoritative: include exactly those presets,
+                // bypassing ShowInVote and the player-count limits.
                 if (activeSet != null)
                 {
                     if (!activeSet.Contains(preset.ID))
                         continue;
-                }
-                else if (!preset.ShowInVote)
-                {
+
+                    presets[preset.ID] = preset.ModeTitle;
                     continue;
                 }
+
+                if (!preset.ShowInVote)
+                    continue;
 
                 if(_playerManager.PlayerCount < (preset.MinPlayers ?? int.MinValue))
                     continue;

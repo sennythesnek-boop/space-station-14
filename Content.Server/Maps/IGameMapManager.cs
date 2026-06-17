@@ -28,6 +28,12 @@ public interface IGameMapManager
     void SetRuntimeMapPool(IReadOnlySet<string>? maps);
 
     /// <summary>
+    /// When an admin runtime map pool is active, controls whether its maps are still filtered by the current
+    /// player count. <c>false</c> (default) makes the pool fully authoritative.
+    /// </summary>
+    bool RuntimeMapPoolFilterByPlayerCount { get; set; }
+
+    /// <summary>
     /// Returns all maps.
     /// </summary>
     /// <returns>enumerator of map prototypes</returns>

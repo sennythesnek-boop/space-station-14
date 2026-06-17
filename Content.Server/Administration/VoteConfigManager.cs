@@ -47,6 +47,8 @@ public sealed partial class VoteConfigManager
         [VoteToggle.Votekick] = true,
     };
 
+    private bool _filterMapsByPlayerCount;
+
     private string _activeMapProfile = "";
     private readonly Dictionary<string, List<string>> _mapProfiles = new();
 
@@ -68,6 +70,7 @@ public sealed partial class VoteConfigManager
                 _cfg.SetCVar(ToggleCVar(toggle), value);
         }
 
+        _maps.RuntimeMapPoolFilterByPlayerCount = _filterMapsByPlayerCount;
         ApplyMapPool();
     }
 
@@ -80,6 +83,15 @@ public sealed partial class VoteConfigManager
         _cfg.SetCVar(ToggleCVar(toggle), value);
         _toggles[toggle] = value;
         _togglesPersisted = true;
+        Save();
+    }
+
+    public bool FilterMapsByPlayerCount => _filterMapsByPlayerCount;
+
+    public void SetFilterMapsByPlayerCount(bool value)
+    {
+        _filterMapsByPlayerCount = value;
+        _maps.RuntimeMapPoolFilterByPlayerCount = value;
         Save();
     }
 
@@ -273,6 +285,8 @@ public sealed partial class VoteConfigManager
             _toggles[VoteToggle.Map] = data.MapVote;
             _toggles[VoteToggle.Votekick] = data.VotekickVote;
 
+            _filterMapsByPlayerCount = data.FilterMapsByPlayerCount;
+
             _activeMapProfile = data.ActiveMapProfile;
             _mapProfiles.Clear();
             foreach (var (k, v) in data.MapProfiles)
@@ -299,6 +313,7 @@ public sealed partial class VoteConfigManager
             PresetVote = _toggles[VoteToggle.Preset],
             MapVote = _toggles[VoteToggle.Map],
             VotekickVote = _toggles[VoteToggle.Votekick],
+            FilterMapsByPlayerCount = _filterMapsByPlayerCount,
             ActiveMapProfile = _activeMapProfile,
             MapProfiles = _mapProfiles.ToDictionary(kv => kv.Key, kv => kv.Value),
             ActivePresetProfile = _activePresetProfile,
@@ -326,6 +341,7 @@ public sealed partial class VoteConfigManager
         public bool PresetVote { get; set; } = true;
         public bool MapVote { get; set; }
         public bool VotekickVote { get; set; } = true;
+        public bool FilterMapsByPlayerCount { get; set; }
         public string ActiveMapProfile { get; set; } = "";
         public Dictionary<string, List<string>> MapProfiles { get; set; } = new();
         public string ActivePresetProfile { get; set; } = "";

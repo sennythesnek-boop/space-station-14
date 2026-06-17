@@ -35,6 +35,8 @@ public sealed partial class GameMapManager : IGameMapManager
 
     // Admin-defined runtime pool (set by VoteConfigManager); overrides the configured pool when non-null.
     private IReadOnlySet<string>? _runtimeMapPool;
+    // When the runtime pool is active, whether its maps are still filtered by player count.
+    private bool _runtimeMapPoolFilterByPlayerCount;
 
     private ISawmill _log = default!;
 
@@ -99,6 +101,20 @@ public sealed partial class GameMapManager : IGameMapManager
 
     public IEnumerable<GameMapPrototype> CurrentlyEligibleMaps()
     {
+        // When an admin profile (runtime pool) is active it is authoritative: return exactly those maps,
+        // bypassing the usual condition eligibility filtering and the fallback list. Player-count filtering
+        // is applied only when the admin opted into it via RuntimeMapPoolFilterByPlayerCount.
+        if (_runtimeMapPool != null)
+        {
+            var pool = AllVotableMaps();
+            if (_runtimeMapPoolFilterByPlayerCount)
+                pool = pool.Where(IsPlayerCountEligible);
+
+            var arr = pool.ToArray();
+            if (arr.Length != 0)
+                return arr;
+        }
+
         var maps = AllVotableMaps().Where(IsMapEligible).ToArray();
         return maps.Length == 0 ? AllMaps().Where(x => x.Fallback) : maps;
     }
@@ -106,6 +122,12 @@ public sealed partial class GameMapManager : IGameMapManager
     public void SetRuntimeMapPool(IReadOnlySet<string>? maps)
     {
         _runtimeMapPool = maps;
+    }
+
+    public bool RuntimeMapPoolFilterByPlayerCount
+    {
+        get => _runtimeMapPoolFilterByPlayerCount;
+        set => _runtimeMapPoolFilterByPlayerCount = value;
     }
 
     public IEnumerable<GameMapPrototype> AllVotableMaps()
@@ -211,10 +233,15 @@ public sealed partial class GameMapManager : IGameMapManager
 
     private bool IsMapEligible(GameMapPrototype map)
     {
-        return map.MaxPlayers >= _playerManager.PlayerCount &&
-               map.MinPlayers <= _playerManager.PlayerCount &&
+        return IsPlayerCountEligible(map) &&
                map.Conditions.All(x => x.Check(map)) &&
                _entityManager.System<GameTicker>().IsMapEligible(map);
+    }
+
+    private bool IsPlayerCountEligible(GameMapPrototype map)
+    {
+        return map.MaxPlayers >= _playerManager.PlayerCount &&
+               map.MinPlayers <= _playerManager.PlayerCount;
     }
 
     private bool TryLookupMap(string gameMap, [NotNullWhen(true)] out GameMapPrototype? map)

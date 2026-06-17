@@ -15,6 +15,7 @@
                 <CheckBox Name="VotekickCheck" Text="{Loc vote-config-votekick}" />
 
                 <Label Text="{Loc vote-config-maps}" StyleClasses="LabelHeading" Margin="0 12 0 2" />
+                <CheckBox Name="MapFilterPlayerCountCheck" Text="{Loc vote-config-map-filter-playercount}" Margin="0 0 0 2" />
                 <BoxContainer Orientation="Horizontal">
                     <OptionButton Name="MapProfileOption" MinWidth="150" />
                     <Button Name="MapDeleteButton" Text="{Loc vote-config-delete}" Margin="4 0 0 0" />

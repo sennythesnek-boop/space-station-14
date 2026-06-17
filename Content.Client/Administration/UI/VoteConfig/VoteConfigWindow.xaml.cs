@@ -12,6 +12,7 @@ namespace Content.Client.Administration.UI.VoteConfig;
 public sealed partial class VoteConfigWindow : FancyWindow
 {
     public event Action<VoteToggle, bool>? OnSetToggle;
+    public event Action<bool>? OnSetMapPlayerCountFilter;
     public event Action<bool, string>? OnSetActiveProfile;
     public event Action<bool, string>? OnCreateProfile;
     public event Action<bool>? OnDeleteProfile;
@@ -30,6 +31,12 @@ public sealed partial class VoteConfigWindow : FancyWindow
         PresetCheck.OnToggled += a => Toggle(VoteToggle.Preset, a.Pressed);
         MapCheck.OnToggled += a => Toggle(VoteToggle.Map, a.Pressed);
         VotekickCheck.OnToggled += a => Toggle(VoteToggle.Votekick, a.Pressed);
+
+        MapFilterPlayerCountCheck.OnToggled += a =>
+        {
+            if (!_updating)
+                OnSetMapPlayerCountFilter?.Invoke(a.Pressed);
+        };
 
         MapProfileOption.OnItemSelected += a =>
         {
@@ -75,9 +82,11 @@ public sealed partial class VoteConfigWindow : FancyWindow
         PresetCheck.Pressed = state.PresetVote;
         MapCheck.Pressed = state.MapVote;
         VotekickCheck.Pressed = state.VotekickVote;
+        MapFilterPlayerCountCheck.Pressed = state.FilterMapsByPlayerCount;
 
         VoteEnabledCheck.Disabled = RestartCheck.Disabled = PresetCheck.Disabled =
-            MapCheck.Disabled = VotekickCheck.Disabled = !state.CanEdit;
+            MapCheck.Disabled = VotekickCheck.Disabled =
+            MapFilterPlayerCountCheck.Disabled = !state.CanEdit;
         MapCreateButton.Disabled = MapDeleteButton.Disabled = !state.CanEdit;
         PresetCreateButton.Disabled = PresetDeleteButton.Disabled = !state.CanEdit;
 
