@@ -75,6 +75,7 @@ namespace Content.Server.Entry
         [Dependency] private MultiServerKickManager _multiServerKick = default!;
         [Dependency] private PlayTimeTrackingManager _playTimeTracking = default!;
         [Dependency] private RoleRequirementOverrideManager _roleReqOverride = default!;
+        [Dependency] private VoteConfigManager _voteConfig = default!;
         [Dependency] private PlayerRateLimitManager _rateLimit = default!;
         [Dependency] private RecipeManager _recipe = default!;
         [Dependency] private RulesManager _rules = default!;
@@ -136,6 +137,7 @@ namespace Content.Server.Entry
             _updateManager.Initialize();
             _playTimeTracking.Initialize();
             _roleReqOverride.Initialize();
+            _voteConfig.Initialize();
             _watchlistWebhookManager.Initialize();
             _job.Initialize();
             _rateLimit.Initialize();
@@ -176,6 +178,7 @@ namespace Content.Server.Entry
             _cvarCtrl.Initialize();
             _feedbackManager.Initialize();
             _roleReqOverride.PostInitialize();
+            _voteConfig.PostInitialize();
         }
 
         public override void Update(ModUpdateLevel level, FrameEventArgs frameEventArgs)

@@ -33,6 +33,9 @@ public sealed partial class GameMapManager : IGameMapManager
     [ViewVariables(VVAccess.ReadOnly)]
     private int _mapQueueDepth = 1;
 
+    // Admin-defined runtime pool (set by VoteConfigManager); overrides the configured pool when non-null.
+    private IReadOnlySet<string>? _runtimeMapPool;
+
     private ISawmill _log = default!;
 
     public void Initialize()
@@ -100,8 +103,25 @@ public sealed partial class GameMapManager : IGameMapManager
         return maps.Length == 0 ? AllMaps().Where(x => x.Fallback) : maps;
     }
 
+    public void SetRuntimeMapPool(IReadOnlySet<string>? maps)
+    {
+        _runtimeMapPool = maps;
+    }
+
     public IEnumerable<GameMapPrototype> AllVotableMaps()
     {
+        // Admin runtime override takes precedence over the configured/preset pool.
+        if (_runtimeMapPool != null)
+        {
+            foreach (var map in _runtimeMapPool)
+            {
+                if (_prototypeManager.TryIndex<GameMapPrototype>(map, out var overrideProto))
+                    yield return overrideProto;
+            }
+
+            yield break;
+        }
+
         var poolPrototype = _entityManager.System<GameTicker>().Preset?.MapPool ??
                    _configurationManager.GetCVar(CCVars.GameMapPool);
 

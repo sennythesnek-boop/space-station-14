@@ -103,8 +103,17 @@ public sealed partial class GameTicker
         return true;
     }
 
+    [Dependency] private Administration.VoteConfigManager _voteConfig = default!;
+
     private void InitializeGamePreset()
     {
+        // If an admin gamemode profile is active, start a random gamemode from it instead of the default.
+        if (_voteConfig.TryGetRandomPreset(out var randomPreset))
+        {
+            SetGamePreset(randomPreset);
+            return;
+        }
+
         SetGamePreset(LobbyEnabled ? _cfg.GetCVar(CCVars.GameLobbyDefaultPreset) : "sandbox");
     }
 

@@ -40,6 +40,7 @@ namespace Content.Server.Voting.Managers
         [Dependency] private IEntityManager _entityManager = default!;
         [Dependency] private IAdminLogManager _adminLogger = default!;
         [Dependency] private ISharedPlaytimeManager _playtimeManager = default!;
+        [Dependency] private Administration.VoteConfigManager _voteConfig = default!;
 
         private int _nextVoteId = 1;
 

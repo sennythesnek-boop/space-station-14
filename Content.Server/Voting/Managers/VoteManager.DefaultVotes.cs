@@ -595,10 +595,21 @@ namespace Content.Server.Voting.Managers
         {
             var presets = new Dictionary<string, string>();
 
+            // When an admin gamemode profile is active it is the authoritative votable set (bypasses ShowInVote);
+            // otherwise fall back to the default ShowInVote behaviour.
+            var activeSet = _voteConfig.GetActivePresetSet();
+
             foreach (var preset in _prototypeManager.EnumeratePrototypes<GamePresetPrototype>())
             {
-                if(!preset.ShowInVote)
+                if (activeSet != null)
+                {
+                    if (!activeSet.Contains(preset.ID))
+                        continue;
+                }
+                else if (!preset.ShowInVote)
+                {
                     continue;
+                }
 
                 if(_playerManager.PlayerCount < (preset.MinPlayers ?? int.MinValue))
                     continue;

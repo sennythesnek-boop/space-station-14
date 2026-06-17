@@ -189,6 +189,15 @@ namespace Content.Server.Administration.Systems
                         Act = () => _console.ExecuteCommand(player, $"playerpanel \"{targetActor.PlayerSession.UserId}\""),
                         Impact = LogImpact.Low
                     });
+
+                    // Role Times
+                    args.Verbs.Add(new Verb
+                    {
+                        Text = Loc.GetString("admin-player-actions-role-times"),
+                        Category = VerbCategory.Admin,
+                        Act = () => _console.ExecuteCommand(player, $"roletimes \"{targetActor.PlayerSession.UserId}\""),
+                        Impact = LogImpact.Low
+                    });
                 }
 
                 if (_mindSystem.TryGetMind(args.Target, out var mindId, out var mindComp) && mindComp.UserId != null)

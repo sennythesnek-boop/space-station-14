@@ -22,6 +22,12 @@ public interface IGameMapManager
     IEnumerable<GameMapPrototype> AllVotableMaps();
 
     /// <summary>
+    /// Installs (or clears, when null) an admin-defined runtime map pool that overrides the configured pool for
+    /// both random map selection and map voting.
+    /// </summary>
+    void SetRuntimeMapPool(IReadOnlySet<string>? maps);
+
+    /// <summary>
     /// Returns all maps.
     /// </summary>
     /// <returns>enumerator of map prototypes</returns>
