@@ -16,10 +16,11 @@ namespace Content.Server.GameTicking
         private TimeSpan _roundStartTime;
 
         /// <summary>
-        /// How long before RoundStartTime do we load maps.
+        /// How long before RoundStartTime do we load maps. Also the cutoff after which map votes are too late.
+        /// Set from CCVars.GameRoundPreloadTime (game.round_preload_time).
         /// </summary>
         [ViewVariables]
-        public TimeSpan RoundPreloadTime { get; } = TimeSpan.FromSeconds(15);
+        public TimeSpan RoundPreloadTime { get; private set; } = TimeSpan.FromSeconds(15);
 
         [ViewVariables]
         private TimeSpan _pauseTime;

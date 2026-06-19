@@ -36,6 +36,7 @@ public sealed partial class AdminLogsEui : BaseEui
 
         LogsControl.LogSearch.OnTextEntered += _ => RequestLogs();
         LogsControl.RefreshButton.OnPressed += _ => RequestLogs();
+        LogsControl.OnRoundChanged += RequestLogs;
         LogsControl.NextButton.OnPressed += _ => NextLogs();
         LogsControl.PopOutButton.OnPressed += _ => PopOut();
         LogsControl.ExportLogs.OnPressed += _ => ExportLogs();

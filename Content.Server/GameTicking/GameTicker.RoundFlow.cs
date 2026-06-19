@@ -136,16 +136,36 @@ namespace Content.Server.GameTicking
             {
                 _map.CreateMap(out var mapId, runMapInit: false);
                 DefaultMap = mapId;
-                return;
+            }
+            else
+            {
+                for (var i = 0; i < maps.Count; i++)
+                {
+                    LoadGameMap(maps[i], out var mapId);
+                    DebugTools.Assert(!_map.IsInitialized(mapId));
+
+                    if (i == 0)
+                        DefaultMap = mapId;
+                }
             }
 
-            for (var i = 0; i < maps.Count; i++)
+            // Safety net: a round needs at least one spawnable station, otherwise job assignment asserts
+            // (stations.Count > 0) and the round fails to start. If selection produced no station - e.g. a
+            // misconfigured/empty map pool, or a map without station config was chosen - load the configured
+            // fallback map so the round always starts. The error log names the offending map(s) for diagnosis.
+            if (GetSpawnableStations().Count == 0)
             {
-                LoadGameMap(maps[i], out var mapId);
-                DebugTools.Assert(!_map.IsInitialized(mapId));
-
-                if (i == 0)
-                    DefaultMap = mapId;
+                var fallback = _gameMapManager.AllMaps().FirstOrDefault(m => m.Fallback);
+                if (fallback != null)
+                {
+                    Log.Error($"Round start produced no spawnable station (selected maps: [{string.Join(", ", maps.Select(m => m.ID))}]). Loading fallback map '{fallback.ID}'.");
+                    LoadGameMap(fallback, out var fallbackMapId);
+                    DefaultMap = fallbackMapId;
+                }
+                else
+                {
+                    Log.Error("Round start produced no spawnable station and no fallback map (with 'fallback: true') is configured!");
+                }
             }
         }
 

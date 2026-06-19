@@ -44,9 +44,17 @@ public sealed partial class AdminLogsControl : Control
 
         ResetRoundButton.OnPressed += ResetRoundPressed;
 
+        ColorButton.OnToggled += ColorToggled;
+
         SetImpacts(Enum.GetValues<LogImpact>().OrderBy(impact => impact).ToArray());
         SetTypes(Enum.GetValues<LogType>());
     }
+
+    /// <summary>Raised when the user changes the selected round, so the owner can re-query logs for it.</summary>
+    public event Action? OnRoundChanged;
+
+    /// <summary>Set while programmatically setting the round value, to avoid firing <see cref="OnRoundChanged"/>.</summary>
+    private bool _suppressRoundEvent;
 
     private int CurrentRound { get; set; }
 
@@ -63,6 +71,12 @@ public sealed partial class AdminLogsControl : Control
 
     public HashSet<LogImpact> SelectedImpacts { get; } = new();
 
+    /// <summary>Whether log lines are tinted by impact and have player names colored.</summary>
+    private bool _colored;
+
+    /// <summary>Known player id → name, used to color player names in log lines.</summary>
+    private readonly Dictionary<Guid, string> _playerNames = new();
+
     public void SetCurrentRound(int round)
     {
         CurrentRound = round;
@@ -72,13 +86,18 @@ public sealed partial class AdminLogsControl : Control
 
     public void SetRoundSpinBox(int round)
     {
+        _suppressRoundEvent = true;
         RoundSpinBox.Value = round;
+        _suppressRoundEvent = false;
         UpdateResetButton();
     }
 
     private void RoundSpinBoxChanged(ValueChangedEventArgs args)
     {
         UpdateResetButton();
+
+        if (!_suppressRoundEvent)
+            OnRoundChanged?.Invoke();
     }
 
     private void UpdateResetButton()
@@ -89,6 +108,17 @@ public sealed partial class AdminLogsControl : Control
     private void ResetRoundPressed(ButtonEventArgs args)
     {
         RoundSpinBox.Value = CurrentRound;
+    }
+
+    private void ColorToggled(ButtonToggledEventArgs args)
+    {
+        _colored = args.Pressed;
+
+        foreach (var child in LogsContainer.Children)
+        {
+            if (child is AdminLogLabel log)
+                log.SetColored(_colored);
+        }
     }
 
     private void TypeSearchChanged(LineEditEventArgs args)
@@ -419,6 +449,10 @@ public sealed partial class AdminLogsControl : Control
 
     public void SetPlayers(Dictionary<Guid, string> players)
     {
+        // Capture every player's name up-front (the dictionary is consumed below) for log-line coloring.
+        foreach (var (id, name) in players)
+            _playerNames[id] = name;
+
         var buttons = new SortedSet<AdminLogPlayerButton>(_adminLogPlayerButtonComparer);
         var allSelected = true;
 
@@ -469,7 +503,16 @@ public sealed partial class AdminLogsControl : Control
         {
             ref var log = ref span[i];
             var separator = new HSeparator();
-            var label = new AdminLogLabel(ref log, separator);
+
+            var names = new List<string>();
+            foreach (var playerId in log.Players)
+            {
+                if (_playerNames.TryGetValue(playerId, out var name))
+                    names.Add(name);
+            }
+
+            var label = new AdminLogLabel(ref log, separator, names);
+            label.SetColored(_colored);
             label.Visible = ShouldShowLog(label);
 
             TotalLogs++;
@@ -534,5 +577,7 @@ public sealed partial class AdminLogsControl : Control
         RoundSpinBox.ValueChanged -= RoundSpinBoxChanged;
 
         ResetRoundButton.OnPressed -= ResetRoundPressed;
+
+        ColorButton.OnToggled -= ColorToggled;
     }
 }

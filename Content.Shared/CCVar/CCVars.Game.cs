@@ -24,6 +24,14 @@ public sealed partial class CCVars
         GameLobbyDuration = CVarDef.Create("game.lobbyduration", 150, CVar.ARCHIVE);
 
     /// <summary>
+    ///     How many seconds before round start the map is locked in and preloaded. Map votes that finish within
+    ///     this window are too late to take effect ("only valid in the pre-round lobby with X remaining"). Should
+    ///     be smaller than <see cref="GameLobbyDuration"/>. Defaults to 15 seconds.
+    /// </summary>
+    public static readonly CVarDef<int>
+        GameRoundPreloadTime = CVarDef.Create("game.round_preload_time", 15, CVar.ARCHIVE);
+
+    /// <summary>
     ///     Controls if players can latejoin at all.
     /// </summary>
     public static readonly CVarDef<bool>
