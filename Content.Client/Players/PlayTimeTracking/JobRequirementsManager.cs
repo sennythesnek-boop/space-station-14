@@ -30,6 +30,9 @@ public sealed partial class JobRequirementsManager : ISharedPlaytimeManager
     private readonly List<ProtoId<AntagPrototype>> _antagBans = new();
     private readonly List<string> _jobWhitelists = new();
 
+    // Cached server role-requirement override. Held until the client's entity systems are ready to apply it.
+    private string? _roleRequirementOverrideData;
+
     private ISawmill _sawmill = default!;
 
     public event Action? Updated;
@@ -56,6 +59,12 @@ public sealed partial class JobRequirementsManager : ISharedPlaytimeManager
             _jobWhitelists.Clear();
             _jobBans.Clear();
             _antagBans.Clear();
+            _roleRequirementOverrideData = null;
+        }
+        else if (e.NewLevel == ClientRunLevel.InGame)
+        {
+            // Entity systems are up now; apply any override that arrived during connection.
+            TryApplyRoleRequirementOverride();
         }
     }
 
@@ -99,8 +108,22 @@ public sealed partial class JobRequirementsManager : ISharedPlaytimeManager
     {
         // Mirror the server's runtime override onto the client role system so the lobby evaluates the
         // same requirements the server enforces, and refresh job availability.
-        _entManager.System<SharedRoleSystem>().SetRuntimeRequirementOverride(ParseOverride(message.Data));
+        _roleRequirementOverrideData = message.Data;
+        TryApplyRoleRequirementOverride();
         Updated?.Invoke();
+    }
+
+    private void TryApplyRoleRequirementOverride()
+    {
+        // This message can arrive during connection, before the client's entity systems exist; in that
+        // case we stash the data and re-apply once we're in-game (see ClientOnRunLevelChanged).
+        if (_roleRequirementOverrideData == null)
+            return;
+
+        if (!_entManager.TrySystem<SharedRoleSystem>(out var roleSystem))
+            return;
+
+        roleSystem.SetRuntimeRequirementOverride(ParseOverride(_roleRequirementOverrideData));
     }
 
     private IReadOnlyDictionary<string, HashSet<JobRequirement>>? ParseOverride(string data)

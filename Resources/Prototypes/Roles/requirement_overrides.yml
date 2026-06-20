@@ -129,7 +129,7 @@
 #Sillicon jobs
     StationAi:
     - !type:OverallPlaytimeRequirement
-      time: 1h
+      time: 5h
     Borg:
     - !type:OverallPlaytimeRequirement
       time: 1h
