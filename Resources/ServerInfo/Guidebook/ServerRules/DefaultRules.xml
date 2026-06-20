@@ -1,28 +1,64 @@
 <Document>
-# Welcome on Issy's Space Station (ISS)
+# Server Rules
+Welcome to Issy's Space Station.
 
-## Server Type
-This server is a Light Roleplay (LRP) environment.
+Please read the rules carefully. If you have any questions, join our Discord and create a ticket, or use F1 (AHelp) to contact staff.
+Note that F1 (AHelp) only works when admins are online.
+We recommend using Discord for non-urgent questions and support requests.
 
-## Conduct
-All players must behave respectfully toward each other at all times.
+## Core Rules
+These rules apply at all times, including between rounds.
 
-### No Discrimination
-Discrimination against real or real-life-related persons is strictly prohibited.
-- Racism
-- Sexism
-- Hate speech
-- Insults
-- Mobbing
-- Unnecessary trolling
+- [textlink="Admins have final say" link="A1Admins"]
+- [textlink="Behave respectfully" link="A2Respect"]
+- [textlink="No discrimination" link="A3Discrimination"]
+- [textlink="No shock content" link="A4Shock"]
+- [textlink="No sexual content" link="A5Sexual"]
+- [textlink="Only use English" link="A6English"]
+- [textlink="Don't cheat" link="A7Cheat"]
 
-## Roleplay
-- **In Character:** Stay in character at all times during roleplay.
-- **Out Of Character:** If you need to communicate out of character, use OOC.
 
-## Violence
-Killing or similar hostile actions are only allowed if you have an appropriate antagonist role.
+## Role Types
+Your role determines which rules apply to you and how. Whether you are a non-antagonist, an antagonist, a free agent, a familiar, or a silicon is only decided by what the game explicitly tells you.
 
-## Support
-For questions about the server or applications, please visit our Discord server.
+- [textlink="Role Types" link="RoleTypes"]
+
+
+## Roleplay Rules
+These rules only apply during a round. A round ends only when the game returns to the lobby. [color=#ff0000]All of these rules apply fully whenever the game is not at the lobby unless it is in an exempt game mode.[/color]
+
+Roleplay rules do not apply to ghosts/spectators/observers while they are ghosts/spectators/observers. Dead chat is considered to be an in-game out of character chat channel.
+
+- [textlink="Behave respectfully" link="A2Respect"]
+- [textlink="Don't abuse out of character knowledge" link="R2Ooc"]
+- [textlink="Roleplay your character" link="R3Roleplay"]
+- [textlink="Play antagonists responsibly" link="R4Antagonist"]
+- [textlink="Follow reasonable escalation" link="R5Reasonable"]
+- [textlink="Act professionally as Command or Security" link="R6Security"]
+- [textlink="No self-antagging" link="R7SelfAntag"]
+- [textlink="No metacommunications" link="R8Meta"]
+- [textlink="Use appropriate character names" link="R9CharacterNames"]
+
+
+## Silicon Rules
+You are only silicon if the game clearly and explicitly tells you that you are a silicon. For players who are playing silicons, these Silicon Rules override all roleplay rules if there is any conflict. Silicon Rules do not override core rules.
+
+- [textlink="1. Your silicon laws are rules" link="RuleS1"]
+- [textlink="2. Laws must be prioritized by their order" link="RuleS2"]
+- [textlink="3. Laws can redefine terms used in other laws" link="RuleS3"]
+- [textlink="4. You cannot request or allow a law change" link="RuleS4"]
+- [textlink="5. You are a free agent if you have no laws" link="RuleS5"]
+- [textlink="6. You are not required to follow orders which are extremely unreasonable" link="RuleS6"]
+- [textlink="7. You must remain consistent with your interpretation of laws" link="RuleS7"]
+- [textlink="8. Your HUD determines who is crew" link="RuleS8"]
+- [textlink="9. Harm refers to physical harm, prioritized by immediacy and likelihood" link="RuleS9"]
+- [textlink="10. You may determine how you resolve conflicts between orders" link="RuleS10"]
+
+
+## Space Law
+Space Law is not part of the server rules, but Command and Security are expected to follow it. It governs crimes, sentencing, contraband, search and seizure, and the treatment of prisoners aboard the station.
+
+- [textlink="Space Law" link="SpaceLaw"]
+- [textlink="Crime Listing" link="SpaceLawCrimeList"]
+
 </Document>

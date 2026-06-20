@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -100,12 +102,18 @@ namespace Content.Server.Administration
             if (record != null)
                 return ReturnForPlayerRecord(record);
 
-            // If all else fails, ask the auth server.
-            var authServer = _configurationManager.GetCVar(CVars.AuthServer);
-            var requestUri = $"{authServer}api/query/name?name={WebUtility.UrlEncode(playerName)}";
-            using var resp = await _httpClient.GetAsync(requestUri, cancel);
+            // If all else fails, ask the auth servers.
+            foreach (var authServer in GetAuthServers())
+            {
+                var requestUri = $"{authServer}api/query/name?name={WebUtility.UrlEncode(playerName)}";
+                using var resp = await _httpClient.GetAsync(requestUri, cancel);
 
-            return await HandleAuthServerResponse(resp, cancel);
+                var located = await HandleAuthServerResponse(resp, cancel);
+                if (located != null)
+                    return located;
+            }
+
+            return null;
         }
 
         public async Task<LocatedPlayerData?> LookupIdAsync(NetUserId userId, CancellationToken cancel = default)
@@ -119,12 +127,31 @@ namespace Content.Server.Administration
             if (record != null)
                 return ReturnForPlayerRecord(record);
 
-            // If all else fails, ask the auth server.
-            var authServer = _configurationManager.GetCVar(CVars.AuthServer);
-            var requestUri = $"{authServer}api/query/userid?userid={WebUtility.UrlEncode(userId.UserId.ToString())}";
-            using var resp = await _httpClient.GetAsync(requestUri, cancel);
+            // If all else fails, ask the auth servers.
+            foreach (var authServer in GetAuthServers())
+            {
+                var requestUri = $"{authServer}api/query/userid?userid={WebUtility.UrlEncode(userId.UserId.ToString())}";
+                using var resp = await _httpClient.GetAsync(requestUri, cancel);
 
-            return await HandleAuthServerResponse(resp, cancel);
+                var located = await HandleAuthServerResponse(resp, cancel);
+                if (located != null)
+                    return located;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the configured authentication backends, in priority order.
+        /// Parsed from the comma-separated <see cref="CVars.AuthServer"/> CVar.
+        /// </summary>
+        private List<string> GetAuthServers()
+        {
+            return _configurationManager.GetCVar(CVars.AuthServer)
+                .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => x.Length > 0)
+                .ToList();
         }
 
         private async Task<LocatedPlayerData?> HandleAuthServerResponse(HttpResponseMessage resp, CancellationToken cancel)

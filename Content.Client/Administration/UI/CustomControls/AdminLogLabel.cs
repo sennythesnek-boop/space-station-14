@@ -44,7 +44,8 @@ public sealed class AdminLogLabel : PanelContainer
         OnVisibilityChanged += VisibilityChanged;
     }
 
-    public SharedAdminLog Log { get; }
+    // 'new' intentionally shadows Control.Log (the base sawmill, unused here).
+    public new SharedAdminLog Log { get; }
 
     public HSeparator Separator { get; }
 

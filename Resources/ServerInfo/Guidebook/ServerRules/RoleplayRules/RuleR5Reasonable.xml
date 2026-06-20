@@ -1,0 +1,28 @@
+<Document>
+  # Follow reasonable escalation
+  Antagonists are fully exempt from escalation rules. Everyone else must escalate conflicts gradually. Escalation should typically follow these steps:
+  - Verbal
+  - Non-harmful
+  - Non-lethal
+  - Lethal
+  - Permanently lethal
+
+  All new conflicts start at the first step. Do not jump ahead without matching escalation from the other party. You may skip steps to match the level the other person is already at, but not otherwise.
+
+  Conflicts should almost never reach the "permanently lethal" stage. If you put someone into crit or kill them, take them to medical or security - this de-escalates the conflict.
+
+  Security can immediately escalate to non-lethal force when needed to arrest someone. People using or brandishing Syndicate items, or showing clear lethal intent, can be met with lethal force.
+
+  ## Examples
+  These examples assume that you are not an antagonist.
+
+  Acceptable:
+  - Someone punches you, so you punch back until they stop. If they go into crit, you stop and take them for treatment.
+  - A clown throws a pie at you and steals your shoes, so you slip them and take their mask.
+  - You see a nuclear operative, so you kill them.
+
+  Prohibited:
+  - Someone punches you, so you gib them.
+  - A clown throws a pie at you, so you stab them to crit with a screwdriver.
+  - Randomly picking fights with people.
+</Document>
