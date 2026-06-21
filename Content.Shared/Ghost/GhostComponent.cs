@@ -94,6 +94,26 @@ public sealed partial class GhostComponent : Component
     /// <remarks>Used to allow admins to change ghost colors. Should be removed if the capability to edit existing sprite colors is ever added back.</remarks>
     [DataField, AutoNetworkedField]
     public Color Color = Color.White;
+
+    /// <summary>
+    /// <see cref="IGameTiming.CurTime"/> at which this ghost's player becomes eligible to take a "New Life".
+    /// Server-computed (death time + cooldown); the client uses it to show a countdown on the New Life button.
+    /// </summary>
+    [AutoNetworkedField]
+    public TimeSpan NewLifeEligibleTime = TimeSpan.Zero;
+
+    /// <summary>
+    /// How many new lives this player has left this round (already accounts for the per-round cap).
+    /// </summary>
+    [AutoNetworkedField]
+    public int NewLivesRemaining;
+
+    /// <summary>
+    /// Server verdict for whether a new life may currently be taken: feature enabled and not blocked by an
+    /// active event/evac/run-level. The client greys out the button when this is false.
+    /// </summary>
+    [AutoNetworkedField]
+    public bool NewLifeAllowed;
 }
 
 /// <summary>

@@ -18,6 +18,7 @@
             <cc:CommandButton Command="roletimereqs" Text="{Loc admin-player-actions-window-role-time-reqs}"/>
             <cc:CommandButton Command="votingconfig" Text="{Loc admin-player-actions-window-voting-config}"/>
             <cc:CommandButton Command="combatstats" Text="{Loc admin-player-actions-window-combat-stats}"/>
+            <cc:CommandButton Command="newlifeconfig" Text="{Loc admin-player-actions-window-new-life-config}"/>
         </GridContainer>
     </BoxContainer>
 </Control>

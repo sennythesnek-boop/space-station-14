@@ -6,6 +6,17 @@ using Robust.Client.UserInterface.XAML;
 
 namespace Content.Client.UserInterface.Systems.Ghost.Widgets;
 
+/// <summary>Display state for the "New Life" ghost button, computed by <see cref="GhostUIController"/>.</summary>
+public struct GhostNewLifeInfo
+{
+    /// <summary>Whether the button is shown at all (feature on for this player and lives remaining).</summary>
+    public bool Show;
+    /// <summary>Whether the button is clickable (eligible right now).</summary>
+    public bool Enabled;
+    /// <summary>Button label (countdown / lives remaining / blocked).</summary>
+    public string Text;
+}
+
 [GenerateTypedNameReferences]
 public sealed partial class GhostGui : UIWidget
 {
@@ -14,6 +25,7 @@ public sealed partial class GhostGui : UIWidget
     public event Action? RequestWarpsPressed;
     public event Action? ReturnToBodyPressed;
     public event Action? GhostRolesPressed;
+    public event Action? NewLifePressed;
     private int _prevNumberRoles;
 
     public GhostGui()
@@ -28,6 +40,7 @@ public sealed partial class GhostGui : UIWidget
         ReturnToBodyButton.OnPressed += _ => ReturnToBodyPressed?.Invoke();
         GhostRolesButton.OnPressed += _ => GhostRolesPressed?.Invoke();
         GhostRolesButton.OnPressed += _ => GhostRolesButton.StyleClasses.Remove(StyleClass.Negative);
+        NewLifeButton.OnPressed += _ => NewLifePressed?.Invoke();
     }
 
     public void Hide()
@@ -36,9 +49,14 @@ public sealed partial class GhostGui : UIWidget
         Visible = false;
     }
 
-    public void Update(int? roles, bool? canReturnToBody)
+    public void Update(int? roles, bool? canReturnToBody, GhostNewLifeInfo newLife = default)
     {
         ReturnToBodyButton.Disabled = !canReturnToBody ?? true;
+
+        NewLifeButton.Visible = newLife.Show;
+        NewLifeButton.Disabled = !newLife.Enabled;
+        if (newLife.Show)
+            NewLifeButton.Text = newLife.Text;
 
         if (roles != null)
         {

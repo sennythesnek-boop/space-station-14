@@ -5,6 +5,7 @@ using Content.Client.UserInterface.Systems.Ghost.Widgets;
 using Content.Shared.Ghost;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
+using Robust.Shared.Timing;
 
 namespace Content.Client.UserInterface.Systems.Ghost;
 
@@ -12,6 +13,7 @@ namespace Content.Client.UserInterface.Systems.Ghost;
 public sealed partial class GhostUIController : UIController, IOnSystemChanged<GhostSystem>
 {
     [Dependency] private IEntityNetworkManager _net = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     [UISystemDependency] private readonly GhostSystem? _system = default;
 
@@ -64,7 +66,39 @@ public sealed partial class GhostUIController : UIController, IOnSystemChanged<G
         }
 
         Gui.Visible = _system?.IsGhost ?? false;
-        Gui.Update(_system?.AvailableGhostRoleCount, _system?.Player?.CanReturnToBody);
+        Gui.Update(_system?.AvailableGhostRoleCount, _system?.Player?.CanReturnToBody, BuildNewLifeInfo());
+    }
+
+    private GhostNewLifeInfo BuildNewLifeInfo()
+    {
+        var ghost = _system?.Player;
+        // Hidden when feature off / no lives left (server reports remaining == 0 in those cases).
+        if (ghost == null || ghost.NewLivesRemaining == 0)
+            return new GhostNewLifeInfo { Show = false };
+
+        var info = new GhostNewLifeInfo { Show = true };
+        var remainingText = ghost.NewLivesRemaining < 0
+            ? string.Empty
+            : $" ({ghost.NewLivesRemaining})";
+
+        var cooldownLeft = ghost.NewLifeEligibleTime - _timing.CurTime;
+        if (cooldownLeft > TimeSpan.Zero)
+        {
+            info.Enabled = false;
+            info.Text = Loc.GetString("new-life-button-cooldown", ("seconds", (int) Math.Ceiling(cooldownLeft.TotalSeconds)));
+        }
+        else if (!ghost.NewLifeAllowed)
+        {
+            info.Enabled = false;
+            info.Text = Loc.GetString("new-life-button-blocked");
+        }
+        else
+        {
+            info.Enabled = true;
+            info.Text = Loc.GetString("new-life-button-ready") + remainingText;
+        }
+
+        return info;
     }
 
     private void OnPlayerRemoved(GhostComponent component)
@@ -125,6 +159,7 @@ public sealed partial class GhostUIController : UIController, IOnSystemChanged<G
         Gui.RequestWarpsPressed += RequestWarps;
         Gui.ReturnToBodyPressed += ReturnToBody;
         Gui.GhostRolesPressed += GhostRolesPressed;
+        Gui.NewLifePressed += NewLife;
         Gui.TargetWindow.WarpClicked += OnWarpClicked;
         Gui.TargetWindow.OnGhostnadoClicked += OnGhostnadoClicked;
 
@@ -139,6 +174,7 @@ public sealed partial class GhostUIController : UIController, IOnSystemChanged<G
         Gui.RequestWarpsPressed -= RequestWarps;
         Gui.ReturnToBodyPressed -= ReturnToBody;
         Gui.GhostRolesPressed -= GhostRolesPressed;
+        Gui.NewLifePressed -= NewLife;
         Gui.TargetWindow.WarpClicked -= OnWarpClicked;
 
         Gui.Hide();
@@ -147,6 +183,11 @@ public sealed partial class GhostUIController : UIController, IOnSystemChanged<G
     private void ReturnToBody()
     {
         _system?.ReturnToBody();
+    }
+
+    private void NewLife()
+    {
+        _system?.RequestNewLife();
     }
 
     private void RequestWarps()

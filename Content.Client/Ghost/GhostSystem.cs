@@ -70,6 +70,21 @@ namespace Content.Client.Ghost
             SubscribeLocalEvent<GhostComponent, ToggleGhostsActionEvent>(OnToggleGhosts);
         }
 
+        private TimeSpan _nextGuiTick;
+
+        public override void Update(float frameTime)
+        {
+            base.Update(frameTime);
+
+            // Drive the New Life button countdown once a second (server only dirties the ghost on state changes,
+            // which isn't enough for a smoothly ticking timer).
+            if (Player is not { } player || _gameTiming.CurTime < _nextGuiTick)
+                return;
+
+            _nextGuiTick = _gameTiming.CurTime + TimeSpan.FromSeconds(1);
+            PlayerUpdated?.Invoke(player);
+        }
+
         private void OnStartup(EntityUid uid, GhostComponent component, ComponentStartup args)
         {
             if (TryComp(uid, out SpriteComponent? sprite))
@@ -190,6 +205,11 @@ namespace Content.Client.Ghost
         {
             var msg = new GhostReturnToBodyRequest();
             RaiseNetworkEvent(msg);
+        }
+
+        public void RequestNewLife()
+        {
+            RaiseNetworkEvent(new GhostNewLifeRequest());
         }
 
         public void OpenGhostRoles()

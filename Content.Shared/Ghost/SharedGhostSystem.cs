@@ -101,6 +101,26 @@ namespace Content.Shared.Ghost
 
 
         /// <summary>
+        /// Updates the "New Life" eligibility fields surfaced to the client (button countdown / lives left / allowed).
+        /// Only dirties when something actually changed.
+        /// </summary>
+        public void SetNewLifeState(Entity<GhostComponent?> entity, TimeSpan eligibleTime, int livesRemaining, bool allowed)
+        {
+            if (!Resolve(entity, ref entity.Comp))
+                return;
+
+            if (entity.Comp.NewLifeEligibleTime == eligibleTime
+                && entity.Comp.NewLivesRemaining == livesRemaining
+                && entity.Comp.NewLifeAllowed == allowed)
+                return;
+
+            entity.Comp.NewLifeEligibleTime = eligibleTime;
+            entity.Comp.NewLivesRemaining = livesRemaining;
+            entity.Comp.NewLifeAllowed = allowed;
+            Dirty(entity);
+        }
+
+        /// <summary>
         /// Sets whether the ghost is allowed to interact with other entities.
         /// </summary>
         public void SetCanGhostInteract(Entity<GhostComponent?> entity, bool value)
@@ -199,6 +219,15 @@ namespace Content.Shared.Ghost
     /// </summary>
     [Serializable, NetSerializable]
     public sealed class GhostReturnToBodyRequest : EntityEventArgs
+    {
+    }
+
+    /// <summary>
+    /// A client to server request for their ghost's player to take a "New Life" — abandon the corpse and
+    /// rejoin mid-round as a fresh character. Validated server-side against cooldown, per-round cap and event gating.
+    /// </summary>
+    [Serializable, NetSerializable]
+    public sealed class GhostNewLifeRequest : EntityEventArgs
     {
     }
 

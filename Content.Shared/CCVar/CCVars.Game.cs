@@ -38,6 +38,34 @@ public sealed partial class CCVars
         GameDisallowLateJoins = CVarDef.Create("game.disallowlatejoins", false, CVar.ARCHIVE | CVar.SERVERONLY);
 
     /// <summary>
+    ///     Master switch for the "New Life" rule: lets a dead player abandon their corpse and rejoin
+    ///     mid-round as a fresh character via the ghost UI. Can be overridden live from the admin window.
+    /// </summary>
+    public static readonly CVarDef<bool>
+        NewLifeEnabled = CVarDef.Create("game.new_life_enabled", false, CVar.SERVERONLY);
+
+    /// <summary>
+    ///     Seconds a player must wait after death before they may take a new life. This window doubles as the
+    ///     medbay revival window, since the body can still be defibbed/cloned until the new life is taken.
+    /// </summary>
+    public static readonly CVarDef<float>
+        NewLifeCooldown = CVarDef.Create("game.new_life_cooldown", 300f, CVar.SERVERONLY);
+
+    /// <summary>
+    ///     Maximum number of new lives a single player may take per round. 0 means unlimited.
+    /// </summary>
+    public static readonly CVarDef<int>
+        NewLifeMax = CVarDef.Create("game.new_life_max", 3, CVar.SERVERONLY);
+
+    /// <summary>
+    ///     Whether an antagonist who takes a new life keeps their antagonist status on the new character. When
+    ///     false (default), they respawn as ordinary crew; when true, the same antag role is re-granted to the
+    ///     new character once it spawns. Antagonists can always take a new life regardless of this setting.
+    /// </summary>
+    public static readonly CVarDef<bool>
+        NewLifeKeepAntag = CVarDef.Create("game.new_life_antag_keep_antag", false, CVar.SERVERONLY);
+
+    /// <summary>
     ///     Controls the default game preset.
     /// </summary>
     public static readonly CVarDef<string>
