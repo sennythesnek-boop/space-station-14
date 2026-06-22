@@ -1,0 +1,56 @@
+# A drivable hoverboard vehicle. Buckle onto it (drag yourself on / "Buckle" verb) and drive:
+# W = forward, S = reverse, A/D = steer. Speed ramps up to ~2x walk. Pull it to reposition when not riding.
+- type: entity
+  id: VehicleHoverboard
+  name: hoverboard
+  description: A hovering board you ride. Buckle on, then drive — W/S go forward/back, A/D steer.
+  components:
+  - type: Sprite
+    sprite: Clothing/Shoes/Misc/hoverboard.rsi
+    state: icon
+    # noRot so the board doesn't visually tilt while steering; the engine still picks the N/E/S/W frame from facing.
+    noRot: true
+    # Render under the rider (their feet are on top of the board) and nudge the visual down to feet height.
+    drawdepth: BelowMobs
+    offset: "0,-0.35"
+  # Item so it can be picked up and carried in-hand. Huge as requested. NOTE: Huge fits in standard backpacks
+  # (their maxItemSize is Huge); use Ginormous if it must be un-baggable.
+  - type: Item
+    size: Huge
+  # So driving into a door bump-opens it, like walking into one.
+  - type: Tag
+    tags:
+    - DoorBumpOpener
+  - type: Hoverboard
+    maxSpeed: 9
+    reverseMaxSpeed: 4.5
+  - type: Strap
+    position: Stand
+    buckleOffset: "0,0"
+    rotation: 0
+    # Don't let the buckle system shove the rider behind the board when facing north (that's chair behaviour).
+    # The rider should always render on top of the board (they stand ON it).
+    modifyBuckleDrawDepth: false
+  - type: MobMover
+  - type: InputMover
+  - type: MovementSpeedModifier
+    baseWalkSpeed: 5
+    baseSprintSpeed: 5
+  - type: Physics
+    bodyType: KinematicController
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.4
+        density: 50
+        mask:
+        - MobMask
+        layer:
+        - MobLayer
+  - type: Pullable
+  - type: Clickable
+  - type: InteractionOutline
+  - type: StaticPrice
+    price: 200

@@ -220,6 +220,13 @@ public abstract partial class SharedMoverController : VirtualController
 
         UsedMobMovement[uid] = true;
 
+        // Hoverboards drive with custom car-like physics. Gated so normal movers never enter this branch.
+        if (TryComp<Vehicle.HoverboardComponent>(uid, out var hoverboard))
+        {
+            HandleHoverboardMovement((uid, hoverboard), mover, physicsComponent, xform, frameTime);
+            return;
+        }
+
         var moveSpeedComponent = ModifierQuery.CompOrNull(uid);
 
         float friction;
