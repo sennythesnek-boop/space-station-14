@@ -12,7 +12,7 @@ namespace Content.Server.Silicons.StationAi;
 /// click the core onto the chassis), so this just tracks the marker and ejects any controlling AI when
 /// the core is pulled.
 /// </summary>
-public sealed class AiVesselCoreSystem : EntitySystem
+public sealed partial class AiVesselCoreSystem : EntitySystem
 {
     [Dependency] private MindSystem _mind = default!;
 

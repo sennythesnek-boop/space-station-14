@@ -17,7 +17,7 @@ namespace Content.Server.Administration;
 /// Also tracks per-round, per-player new-life usage (in memory; not persisted).
 /// Persisted as JSON to the server user-data dir, mirroring <see cref="VoteConfigManager"/>.
 /// </summary>
-public sealed class NewLifeManager
+public sealed partial class NewLifeManager
 {
     [Dependency] private IResourceManager _res = default!;
     [Dependency] private IConfigurationManager _cfg = default!;

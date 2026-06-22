@@ -25,7 +25,7 @@ namespace Content.Server.NewLife;
 /// the player's ghost for the UI, and handles the actual new-life request by routing the player back through
 /// character selection via <see cref="GameTicker.Respawn"/> (which leaves the old corpse soulless).
 /// </summary>
-public sealed class NewLifeSystem : EntitySystem
+public sealed partial class NewLifeSystem : EntitySystem
 {
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private GameTicker _gameTicker = default!;

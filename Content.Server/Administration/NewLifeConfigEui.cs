@@ -11,7 +11,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Server.Administration;
 
 /// <summary>Server side of the New Life config admin window. Edits the <see cref="NewLifeManager"/>.</summary>
-public sealed class NewLifeConfigEui : BaseEui
+public sealed partial class NewLifeConfigEui : BaseEui
 {
     [Dependency] private IAdminManager _admins = default!;
     [Dependency] private IPrototypeManager _proto = default!;
