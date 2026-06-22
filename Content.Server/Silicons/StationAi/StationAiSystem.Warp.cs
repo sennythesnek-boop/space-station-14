@@ -7,7 +7,7 @@ namespace Content.Server.Silicons.StationAi;
 
 public sealed partial class StationAiSystem
 {
-    [Dependency] private readonly UserInterfaceSystem _ui = default!;
+    [Dependency] private UserInterfaceSystem _ui = default!;
 
     private void InitializeWarp()
     {

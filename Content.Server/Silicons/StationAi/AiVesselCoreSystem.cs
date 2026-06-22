@@ -14,7 +14,7 @@ namespace Content.Server.Silicons.StationAi;
 /// </summary>
 public sealed class AiVesselCoreSystem : EntitySystem
 {
-    [Dependency] private readonly MindSystem _mind = default!;
+    [Dependency] private MindSystem _mind = default!;
 
     public override void Initialize()
     {

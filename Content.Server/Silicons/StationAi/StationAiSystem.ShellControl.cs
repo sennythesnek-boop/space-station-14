@@ -15,9 +15,9 @@ namespace Content.Server.Silicons.StationAi;
 
 public sealed partial class StationAiSystem
 {
-    [Dependency] private readonly BorgSystem _borg = default!;
-    [Dependency] private readonly SharedAccessSystem _accessSystem = default!;
-    [Dependency] private readonly SharedActionsSystem _actions = default!;
+    [Dependency] private BorgSystem _borg = default!;
+    [Dependency] private SharedAccessSystem _accessSystem = default!;
+    [Dependency] private SharedActionsSystem _actions = default!;
 
     private static readonly EntProtoId ShellReturnAction = "ActionStationAiReturnToCore";
 
