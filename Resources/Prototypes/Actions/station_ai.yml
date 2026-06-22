@@ -15,6 +15,52 @@
     event: !type:JumpToCoreEvent
 
 - type: entity
+  parent: BaseAction
+  id: ActionStationAiWarp
+  name: Warp
+  description: View a list of warp points and crew, and send your eye to one of them.
+  components:
+  - type: Action
+    priority: -7
+    itemIconStyle: BigAction
+    icon:
+      sprite: Interface/Actions/actions_ai.rsi
+      state: warp
+  - type: InstantAction
+    event: !type:StationAiWarpActionEvent
+
+- type: entity
+  parent: BaseAction
+  id: ActionStationAiControlShell
+  name: Control Shell
+  description: View a list of available AI shells and take remote control of one.
+  components:
+  - type: Action
+    priority: -6
+    itemIconStyle: BigAction
+    icon:
+      sprite: Interface/Actions/actions_ai.rsi
+      state: control_shell
+  - type: InstantAction
+    event: !type:StationAiControlShellActionEvent
+
+# Granted to an AI shell so its controlling AI can hand control back to its core.
+- type: entity
+  parent: BaseAction
+  id: ActionStationAiReturnToCore
+  name: Return to Core
+  description: Release control of this shell and return your consciousness to the AI core.
+  components:
+  - type: Action
+    priority: -9
+    itemIconStyle: BigAction
+    icon:
+      sprite: Interface/Actions/actions_ai.rsi
+      state: ai_core
+  - type: InstantAction
+    event: !type:StationAiShellReturnEvent
+
+- type: entity
   parent: BaseMentalAction
   id: ActionAIViewLaws
   name: View Laws

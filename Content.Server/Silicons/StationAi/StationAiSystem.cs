@@ -79,6 +79,9 @@ public sealed partial class StationAiSystem : SharedStationAiSystem
     {
         base.Initialize();
 
+        InitializeWarp();
+        InitializeShellControl();
+
         SubscribeLocalEvent<StationAiCoreComponent, AfterConstructionChangeEntityEvent>(AfterConstructionChangeEntity);
         SubscribeLocalEvent<StationAiCoreComponent, ContainerSpawnEvent>(OnContainerSpawn);
         SubscribeLocalEvent<StationAiCoreComponent, ApcPowerReceiverBatteryChangedEvent>(OnApcBatteryChanged);

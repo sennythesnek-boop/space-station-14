@@ -48,6 +48,12 @@
 		},
 		{
 			"name": "door_overcharge_off"
+		},
+		{
+			"name": "warp"
+		},
+		{
+			"name": "control_shell"
 		}
 	]
 }

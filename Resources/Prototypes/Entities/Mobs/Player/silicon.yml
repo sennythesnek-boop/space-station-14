@@ -34,6 +34,8 @@
   - type: ActionGrant
     actions:
     - ActionJumpToCore
+    - ActionStationAiWarp
+    - ActionStationAiControlShell
     - ActionAIViewLaws
   - type: UserInterface
     interfaces:
@@ -47,6 +49,10 @@
         type: SiliconLawBoundUserInterface
       enum.CommunicationsConsoleUiKey.Key:
         type: CommunicationsConsoleBoundUserInterface
+      enum.StationAiWarpUiKey.Key:
+        type: StationAiWarpBoundUserInterface
+      enum.StationAiControlShellUiKey.Key:
+        type: StationAiShellBoundUserInterface
   - type: IntrinsicUI
     uis:
       enum.RadarConsoleUiKey.Key:

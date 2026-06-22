@@ -34,6 +34,18 @@ ai-device-no-access = You have no access to this device
 
 ai-consciousness-download-warning = Your consciousness is being downloaded.
 
+# Warp
+station-ai-warp-window-title = Warp
+station-ai-warp-window-search = Search
+station-ai-warp-window-location = Location: {$name}
+
+# Shell control
+station-ai-shell-window-title = Control Shell
+station-ai-shell-window-search = Search
+station-ai-shell-window-in-use = {$name} (in use)
+station-ai-shell-already-controlling = You are already controlling a shell.
+station-ai-shell-unavailable = That shell is no longer available.
+
 # UI
 station-ai-customization-menu = AI customization
 station-ai-customization-categories = Categories

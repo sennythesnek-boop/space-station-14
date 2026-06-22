@@ -5,6 +5,7 @@
   recipes:
   - MMI
   - PositronicBrain
+  - AiVesselCore
   - SciFlash
   - CyborgEndoskeleton
 
