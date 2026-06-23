@@ -112,7 +112,7 @@ public sealed partial class DisposalHolderComponent : Component, IGasMixtureHold
     /// When given the opportunity, the holder has this chance of escaping the disposals system.
     /// </summary>
     [DataField]
-    public float EscapeChance = 0.2f;
+    public float EscapeChance = 0f;
 
     /// <summary>
     /// Sets how many seconds mobs will be stunned after being ejected from an open tube.
