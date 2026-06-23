@@ -4,7 +4,7 @@ using Robust.Shared.Console;
 
 namespace Content.Server.Administration.Commands;
 
-[AdminCommand(AdminFlags.Admin)]
+[AdminCommand(AdminFlags.Logs)]
 public sealed partial class CombatStatsCommand : LocalizedCommands
 {
     [Dependency] private EuiManager _euis = default!;

@@ -37,7 +37,7 @@ public sealed partial class CombatStatsEui : BaseEui
             BuildState();
     }
 
-    private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
+    private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Logs);
 
     public override EuiStateBase GetNewState() => _state;
 

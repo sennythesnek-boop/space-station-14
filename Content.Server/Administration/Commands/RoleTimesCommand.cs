@@ -6,7 +6,7 @@ using Robust.Shared.Console;
 
 namespace Content.Server.Administration.Commands;
 
-[AdminCommand(AdminFlags.Admin)]
+[AdminCommand(AdminFlags.Moderator)]
 public sealed partial class RoleTimesCommand : LocalizedCommands
 {
     [Dependency] private IPlayerLocator _locator = default!;

@@ -69,12 +69,12 @@ public sealed partial class RoleTimesEui : BaseEui
 
     private bool CanView()
     {
-        return _admins.HasAdminFlag(Player, AdminFlags.Admin);
+        return _admins.HasAdminFlag(Player, AdminFlags.Moderator);
     }
 
     private bool CanEdit()
     {
-        return _admins.HasAdminFlag(Player, AdminFlags.Admin);
+        return _admins.HasAdminFlag(Player, AdminFlags.Moderator);
     }
 
     /// <summary>
