@@ -9,49 +9,39 @@ Entries:
     type: Add
   - message: Added a search box to the keybinds options menu to quickly find a binding.
     type: Add
-  - message: Added this ISS changelog and an in-client fork version display.
+  - message: Added the ISS changelog and an in-client fork version display.
     type: Add
   - message: The Power Grid Check event now fires less often and the blackout is shorter.
     type: Tweak
   - message: Disposals are now much harder to escape from.
-    type: Tweak
-  - message: The Combat Stats admin panel now opens with the Logs flag, and the Role Times panel with the Moderator flag.
     type: Tweak
   id: 8
 - author: issyman182
   version: iss14:1.4.0
   time: '2026-06-22'
   changes:
-  - message: New Life / respawn — ghosts can opt in to respawn, with a cooldown, a per-round cap and an event blocklist, plus an admin config window.
+  - message: New cyborg brain — the AI vassal core. The Station AI can take control of a cyborg that has an AI vassal core as its brain.
     type: Add
-  - message: The Station AI can now warp its eye to players and warp points, and take control of AI-only cyborg shells.
+  - message: The Station AI can now warp to players and stations.
     type: Add
   - message: New hoverboard, orderable from cargo in a hoverboard crate.
+    type: Add
+  - message: New Life / respawn, including new rules.
     type: Add
   id: 7
 - author: issyman182
   version: iss14:1.3.0
   time: '2026-06-20'
   changes:
-  - message: New Combat Stats admin panel.
-    type: Add
-  - message: Admin logs are now colored, and kill and damage logs were added.
-    type: Add
-  - message: Servers can now validate logins against multiple auth servers at once.
-    type: Add
-  - message: Added a configurable round preload time.
-    type: Add
-  - message: Rewrote the in-game Server Rules guidebook.
+  - message: New ruleset — the in-game Server Rules guidebook was rewritten.
     type: Tweak
-  - message: Fixed the client-side role requirement display.
-    type: Fix
+  - message: Both clients now work — players on PlaySS14 and the Steam version can join (the server validates logins against multiple auth servers).
+    type: Add
   id: 6
 - author: issyman182
   version: iss14:1.2.2
   time: '2026-06-17'
   changes:
-  - message: Fixed the permissions for the vote config, role times and role time requirement panels.
-    type: Fix
   - message: Fixed map loading.
     type: Fix
   id: 5
@@ -61,8 +51,6 @@ Entries:
   changes:
   - message: The map vote now has a player-count filter checkbox.
     type: Add
-  - message: The release version is now written into server_config.toml on deploy.
-    type: Tweak
   - message: Fixed voting.
     type: Fix
   id: 4
@@ -70,13 +58,7 @@ Entries:
   version: iss14:1.2.0
   time: '2026-06-17'
   changes:
-  - message: New voting config menu — toggle individual votes and manage map/gamemode pools.
-    type: Add
-  - message: Role time requirements editor — change job playtime requirements in-game.
-    type: Add
   - message: The author's job icon now shows before their name in radio/comms chat.
-    type: Add
-  - message: Added new commands to the admin menu.
     type: Add
   id: 3
 - author: issyman182
@@ -90,8 +72,6 @@ Entries:
   version: iss14:1.0.1
   time: '2026-06-14'
   changes:
-  - message: New Role Times admin panel and command for viewing player role playtimes.
-    type: Add
   - message: Custom fork branding and icons.
     type: Tweak
   id: 1

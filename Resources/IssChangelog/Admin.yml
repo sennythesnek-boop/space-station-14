@@ -2,9 +2,66 @@ Name: Admin
 Order: 3
 AdminOnly: true
 Entries:
+# Unreleased — not part of a tagged release yet, so no version.
 - author: issyman182
   time: '2026-06-24'
   changes:
-  - message: Tab created. Fork admin-only changes will be tracked here.
+  - message: The Combat Stats panel now opens with the Logs flag (previously required full Admin).
+    type: Tweak
+  - message: The Role Times panel (view and edit) now opens with the Moderator flag (previously required full Admin).
+    type: Tweak
+  id: 7
+- author: issyman182
+  version: iss14:1.4.0
+  time: '2026-06-22'
+  changes:
+  - message: New Life can be enabled or disabled.
+    type: Add
+  - message: The New Life respawn delay can be configured.
+    type: Add
+  id: 6
+- author: issyman182
+  version: iss14:1.3.0
+  time: '2026-06-20'
+  changes:
+  - message: Admin logs are now colored.
+    type: Add
+  - message: New Combat Stats window (kill / damage logs).
+    type: Add
+  - message: Added a configurable round preload time.
+    type: Add
+  - message: Fixed the client-side role requirement display.
+    type: Fix
+  id: 5
+- author: issyman182
+  version: iss14:1.2.2
+  time: '2026-06-17'
+  changes:
+  - message: Fixed the permissions for the vote config, role times and role time requirement panels.
+    type: Fix
+  id: 4
+- author: issyman182
+  version: iss14:1.2.1
+  time: '2026-06-17'
+  changes:
+  - message: The release version is now written into server_config.toml on deploy.
+    type: Tweak
+  id: 3
+- author: issyman182
+  version: iss14:1.2.0
+  time: '2026-06-17'
+  changes:
+  - message: New voting config menu — toggle individual votes and manage map/gamemode pools.
+    type: Add
+  - message: Role time requirements editor — change job playtime requirements in-game.
+    type: Add
+  - message: Added new commands to the admin menu.
+    type: Add
+  id: 2
+- author: issyman182
+  version: iss14:1.0.1
+  time: '2026-06-14'
+  changes:
+  - message: New Role Times admin panel and command for viewing player role playtimes.
     type: Add
   id: 1
