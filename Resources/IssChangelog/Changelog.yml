@@ -1,0 +1,20 @@
+Name: Changelog
+Order: 0
+Entries:
+- author: issyman182
+  version: iss14:1.5.0
+  time: '2026-06-24'
+  changes:
+  - message: Sprint! Press or hold Space to sprint, drawing from your stamina pool (ported from Goobstation).
+    type: Add
+  - message: Added a search box to the keybinds options menu to quickly find a binding.
+    type: Add
+  - message: The Power Grid Check event now fires less often and the blackout is shorter.
+    type: Tweak
+  - message: Disposals are now much harder to escape from.
+    type: Tweak
+  - message: The Combat Stats admin panel now opens with the Logs flag instead of full Admin.
+    type: Tweak
+  - message: The Role Times admin panel (view and edit) now opens with the Moderator flag instead of full Admin.
+    type: Tweak
+  id: 1

@@ -55,6 +55,16 @@ public sealed partial class ChangelogTab : Control
             else
                 dayNice = day.ToShortDateString();
 
+            // Append any fork version(s) recorded for this day's entries (e.g. "iss14:1.5.0").
+            var versions = dayEntries
+                .Select(e => e.Version)
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct()
+                .ToArray();
+
+            if (versions.Length > 0)
+                dayNice = $"{dayNice} — {string.Join(", ", versions)}";
+
             ChangelogBody.AddChild(new Label
             {
                 Text = dayNice,

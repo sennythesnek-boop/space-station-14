@@ -50,6 +50,12 @@
                     StyleIdentifier="mainMenu"
                     StyleClasses="OpenBoth"
                     Access="Public" />
+                <Button Name="IssChangelogButton"
+                        Access="Public"
+                        Text="{Loc 'changelog-button-iss'}"
+                        TextAlign="Center"
+                        StyleClasses="OpenBoth"
+                        StyleIdentifier="mainMenu" />
                 <Button Name="OptionsButton"
                         Access="Public"
                         Text="{Loc 'main-menu-options-button'}"

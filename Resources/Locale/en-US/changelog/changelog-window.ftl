@@ -10,6 +10,9 @@ changelog-version-tag = { $fork }/{ $version }
 
 changelog-button = Changelog
 changelog-button-new-entries = Changelog (new!)
+changelog-button-iss = ISS Changelog
+
+iss-changelog-window-title = ISS Changelog
 
 changelog-tab-title-Changelog = Changelog
 changelog-tab-title-Admin = Admin

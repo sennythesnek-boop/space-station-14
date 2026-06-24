@@ -48,6 +48,10 @@ namespace Content.Client.Info
             changelogButton.OnPressed += args => UserInterfaceManager.GetUIController<ChangelogUIController>().ToggleWindow();
             buttons.AddChild(changelogButton);
 
+            var issChangelogButton = new Button { Text = Loc.GetString("changelog-button-iss") };
+            issChangelogButton.OnPressed += args => UserInterfaceManager.GetUIController<IssChangelogUIController>().ToggleWindow();
+            buttons.AddChild(issChangelogButton);
+
             void AddInfoButton(string loc, CVarDef<string> cVar)
             {
                 var button = new Button { Text = Loc.GetString(loc) };

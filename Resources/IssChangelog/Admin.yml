@@ -1,0 +1,10 @@
+Name: Admin
+Order: 3
+AdminOnly: true
+Entries:
+- author: issyman182
+  time: '2026-06-24'
+  changes:
+  - message: Tab created. Fork admin-only changes will be tracked here.
+    type: Add
+  id: 1

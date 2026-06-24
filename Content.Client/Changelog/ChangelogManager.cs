@@ -103,13 +103,13 @@ namespace Content.Client.Changelog
             CheckLastSeenEntry();
         }
 
-        public Task<List<Changelog>> LoadChangelog()
+        public Task<List<Changelog>> LoadChangelog(string path = "/Changelog")
         {
             return Task.Run(() =>
             {
                 var changelogs = new List<Changelog>();
-                var directory = new ResPath("/Changelog");
-                foreach (var file in _resource.ContentFindFiles(new ResPath("/Changelog/")))
+                var directory = new ResPath(path);
+                foreach (var file in _resource.ContentFindFiles(new ResPath($"{path}/")))
                 {
                     if (file.Directory != directory || file.Extension != "yml")
                         continue;
@@ -150,8 +150,10 @@ namespace Content.Client.Changelog
             if (version.Length > 7)
                 version = version[..7];
 
+            // Leave the version blank when it hasn't been set (e.g. local test builds)
+            // instead of showing "Unknown Version".
             if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(fork))
-                return Loc.GetString("changelog-version-unknown");
+                return string.Empty;
 
             return Loc.GetString("changelog-version-tag",
                 ("fork", fork),
@@ -203,6 +205,13 @@ namespace Content.Client.Changelog
 
             [DataField]
             public DateTime Time { get; private set; }
+
+            /// <summary>
+            ///     Optional fork version this entry belongs to (e.g. "iss14:1.5.0").
+            ///     Displayed next to the date heading. Used by the ISS changelog tab.
+            /// </summary>
+            [DataField("version")]
+            public string Version { get; private set; } = "";
 
             [DataField("changes")]
             public List<ChangelogChange> Changes { get; private set; } = default!;

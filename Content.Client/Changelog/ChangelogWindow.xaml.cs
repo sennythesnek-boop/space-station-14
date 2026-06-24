@@ -18,6 +18,19 @@ namespace Content.Client.Changelog
         [Dependency] private IClientAdminManager _adminManager = default!;
         [Dependency] private ChangelogManager _changelog = default!;
 
+        /// <summary>
+        ///     Content directory to load changelog files from. Defaults to the main changelog;
+        ///     the ISS changelog window points this at its own folder.
+        /// </summary>
+        public string ChangelogDirectory = "/Changelog";
+
+        /// <summary>
+        ///     Whether opening this window marks the (main) changelog as read.
+        ///     Disabled for secondary windows like the ISS changelog so they don't
+        ///     clear the main "new entries" badge.
+        /// </summary>
+        public bool TrackReadId = true;
+
         public ChangelogWindow()
         {
             RobustXamlLoader.Load(this);
@@ -28,7 +41,9 @@ namespace Content.Client.Changelog
         {
             base.Opened();
 
-            _changelog.SaveNewReadId();
+            if (TrackReadId)
+                _changelog.SaveNewReadId();
+
             PopulateChangelog();
         }
 
@@ -52,7 +67,7 @@ namespace Content.Client.Changelog
         private async void PopulateChangelog()
         {
             // Changelog is not kept in memory so load it again.
-            var changelogs = await _changelog.LoadChangelog();
+            var changelogs = await _changelog.LoadChangelog(ChangelogDirectory);
 
             Tabs.RemoveAllChildren();
 
