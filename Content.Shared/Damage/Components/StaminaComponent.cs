@@ -1,7 +1,19 @@
+// SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
+// SPDX-FileCopyrightText: 2025 gluesniffler <linebarrelerenthusiast@gmail.com>
+// SPDX-FileCopyrightText: 2026 issyman182 <issyman182@gmail.com>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This file is MIT-licensed Space Station 14 upstream code with an AGPL-3.0-or-later
+// addition ported from Goobstation (the ActiveDrains stamina-drain mechanism and IsSprinting
+// flag, used by the sprint feature). Because it now contains AGPL-derived code, the file as a
+// whole is distributed under AGPL-3.0-or-later.
+
 using System.Numerics;
 using Content.Shared.Alert;
 using Content.Shared.FixedPoint;
 using Robust.Shared.Audio;
+using Robust.Shared.GameObjects;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom;
@@ -49,6 +61,15 @@ public sealed partial class StaminaComponent : Component
     /// </summary>
     [ViewVariables, AutoNetworkedField]
     public float CritThreshold = 100f;
+
+    /// <summary>
+    /// Ported from Goobstation: a dictionary of active stamina drains, keyed by the source of the drain.
+    /// DrainRate is how much stamina it changes per second, ModifiesSpeed marks whether it should slow the user,
+    /// Source is the entity responsible, and ApplyResistances whether stamina resistances apply to the drain.
+    /// Used by the sprint feature to continuously spend stamina while sprinting.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public Dictionary<string, (float DrainRate, bool ModifiesSpeed, NetEntity? Source, bool ApplyResistances)> ActiveDrains = new();
 
     /// <summary>
     /// How long will this mob be stunned for?
@@ -173,4 +194,10 @@ public sealed partial class StaminaComponent : Component
     public Vector2 StartOffset = Vector2.Zero;
 
     #endregion
+
+    /// <summary>
+    /// Ported from Goobstation: whether this entity is currently sprinting. Read by the sprint system.
+    /// </summary>
+    [DataField]
+    public bool IsSprinting { get; set; }
 }

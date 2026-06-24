@@ -1,3 +1,14 @@
+// SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
+// SPDX-FileCopyrightText: 2025 gluesniffler <linebarrelerenthusiast@gmail.com>
+// SPDX-FileCopyrightText: 2026 issyman182 <issyman182@gmail.com>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This file is MIT-licensed Space Station 14 upstream code with an AGPL-3.0-or-later
+// addition ported from Goobstation (ToggleStaminaDrain/ModifyStaminaDrain and the active-drain
+// loop in Update(), used by the sprint feature). Because it now contains AGPL-derived code, the
+// file as a whole is distributed under AGPL-3.0-or-later.
+
 using System.Linq;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Alert;
@@ -263,7 +274,7 @@ public abstract partial class SharedStaminaSystem : EntitySystem
     }
 
     public void TakeStaminaDamage(EntityUid uid, float value, StaminaComponent? component = null,
-        EntityUid? source = null, EntityUid? with = null, bool visual = true, SoundSpecifier? sound = null, bool ignoreResist = false)
+        EntityUid? source = null, EntityUid? with = null, bool visual = true, SoundSpecifier? sound = null, bool ignoreResist = false, bool logDamage = true)
     {
         if (!Resolve(uid, ref component, false))
             return;
@@ -328,13 +339,17 @@ public abstract partial class SharedStaminaSystem : EntitySystem
 
         if (value <= 0)
             return;
-        if (source != null)
+        // Ported from Goobstation: skip logging self-inflicted drains (e.g. per-frame sprint stamina cost) to avoid log spam.
+        if (logDamage && source != uid)
         {
-            _adminLogger.Add(LogType.Stamina, $"{ToPrettyString(source.Value):user} caused {value} stamina damage to {ToPrettyString(uid):target}{(with != null ? $" using {ToPrettyString(with.Value):using}" : "")}");
-        }
-        else
-        {
-            _adminLogger.Add(LogType.Stamina, $"{ToPrettyString(uid):target} took {value} stamina damage");
+            if (source != null)
+            {
+                _adminLogger.Add(LogType.Stamina, $"{ToPrettyString(source.Value):user} caused {value} stamina damage to {ToPrettyString(uid):target}{(with != null ? $" using {ToPrettyString(with.Value):using}" : "")}");
+            }
+            else
+            {
+                _adminLogger.Add(LogType.Stamina, $"{ToPrettyString(uid):target} took {value} stamina damage");
+            }
         }
 
         if (visual)
@@ -348,6 +363,45 @@ public abstract partial class SharedStaminaSystem : EntitySystem
         }
     }
 
+    /// <summary>
+    /// Ported from Goobstation: registers or removes a continuous stamina drain under the given key.
+    /// Used by the sprint feature so the same stamina pool is spent while sprinting.
+    /// </summary>
+    public void ToggleStaminaDrain(EntityUid target, float drainRate, bool enabled, bool modifiesSpeed, string key, EntityUid? source = null, bool applyResistances = false)
+    {
+        if (!_stamQuery.TryComp(target, out var stamina))
+            return;
+
+        // If there's no source, we assume it's the target that caused the drain.
+        var actualSource = source ?? target;
+
+        if (enabled)
+        {
+            stamina.ActiveDrains.TryAdd(key, (drainRate, modifiesSpeed, GetNetEntity(actualSource), applyResistances));
+            EnsureComp<ActiveStaminaComponent>(target);
+        }
+        else
+        {
+            stamina.ActiveDrains.Remove(key);
+        }
+
+        Dirty(target, stamina);
+    }
+
+    /// <summary>
+    /// Ported from Goobstation: changes the drain rate of an already-registered active drain.
+    /// </summary>
+    public void ModifyStaminaDrain(EntityUid target, string key, float newValue, StaminaComponent? component = null)
+    {
+        if (!Resolve(target, ref component, false))
+            return;
+
+        if (component.ActiveDrains.TryGetValue(key, out var drain))
+            component.ActiveDrains[key] = (newValue, drain.ModifiesSpeed, drain.Source, drain.ApplyResistances);
+
+        Dirty(target, component);
+    }
+
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
@@ -358,11 +412,28 @@ public abstract partial class SharedStaminaSystem : EntitySystem
         while (query.MoveNext(out var uid, out _))
         {
             // Just in case we have active but not stamina we'll check and account for it.
+            // Ported from Goobstation: keep entities active while they still have running drains.
             if (!_stamQuery.TryComp(uid, out var comp) ||
-                comp.StaminaDamage <= 0f && !comp.Critical)
+                comp.StaminaDamage <= 0f && !comp.Critical && comp.ActiveDrains.Count == 0)
             {
                 RemComp<ActiveStaminaComponent>(uid);
                 continue;
+            }
+
+            // Ported from Goobstation: apply every active drain (e.g. sprinting) each frame.
+            if (comp.ActiveDrains.Count > 0)
+            {
+                foreach (var (drainRate, _, source, applyResistances) in comp.ActiveDrains.Values)
+                {
+                    TakeStaminaDamage(
+                        uid,
+                        drainRate * frameTime,
+                        comp,
+                        source: GetEntity(source),
+                        visual: false,
+                        ignoreResist: !applyResistances,
+                        logDamage: false);
+                }
             }
 
             // Shouldn't need to consider paused time as we're only iterating non-paused stamina components.
@@ -377,10 +448,12 @@ public abstract partial class SharedStaminaSystem : EntitySystem
 
             comp.NextUpdate += TimeSpan.FromSeconds(1f);
 
-            TakeStaminaDamage(
-                uid,
-                comp.AfterCritical ? -comp.Decay * comp.AfterCritDecayMultiplier : -comp.Decay, // Recover faster after crit
-                comp);
+            // Ported from Goobstation: don't passively regen stamina while something is actively draining it (e.g. sprinting).
+            if (!comp.ActiveDrains.Values.Any(x => x.DrainRate > 0))
+                TakeStaminaDamage(
+                    uid,
+                    comp.AfterCritical ? -comp.Decay * comp.AfterCritDecayMultiplier : -comp.Decay, // Recover faster after crit
+                    comp);
 
             Dirty(uid, comp);
         }

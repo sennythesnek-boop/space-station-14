@@ -1,6 +1,4 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using Content.Shared.Roles;
 using Content.Shared.StatusIcon;
 using JetBrains.Annotations;
@@ -26,8 +24,8 @@ public sealed partial class ChatIconTag : IMarkupTagHandler
 
     public string Name => "chaticon";
 
-    // Target inline height in virtual px, sized to sit with normal chat text.
-    private const float IconSize = 14f;
+    // Target inline size in virtual px. Matches Goobstation's 20px icon box.
+    private const float IconSize = 20f;
 
     public bool TryCreateControl(MarkupNode node, [NotNullWhen(true)] out Control? control)
     {
@@ -53,15 +51,15 @@ public sealed partial class ChatIconTag : IMarkupTagHandler
             return false;
         }
 
-        // Scale the icon to a uniform target height regardless of its native rsi size.
-        var native = Math.Max(texture.Size.X, texture.Size.Y);
-        var scale = native > 0 ? IconSize / native : 1f;
-
+        // Adapted from Goobstation's IconTag: declare a fixed layout box and stretch the texture to fill it.
+        // This gives the icon a deterministic footprint that sizes consistently with surrounding chat text,
+        // unlike TextureScale + StretchMode.Keep which leaves the control reporting its native (e.g. 8x8) size.
         control = new TextureRect
         {
             Texture = texture,
-            TextureScale = new Vector2(scale, scale),
-            Stretch = TextureRect.StretchMode.Keep,
+            SetWidth = IconSize,
+            SetHeight = IconSize,
+            Stretch = TextureRect.StretchMode.Scale,
             VerticalAlignment = Control.VAlignment.Center,
             ToolTip = job.LocalizedName,
             MouseFilter = Control.MouseFilterMode.Stop,

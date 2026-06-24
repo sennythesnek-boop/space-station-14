@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Content.Client.Stylesheets;
 using Content.Shared.CCVar;
@@ -35,6 +36,9 @@ namespace Content.Client.Options.UI.Tabs
             new();
 
         private readonly List<Action> _deferCommands = new();
+
+        // Groups of keybind rows under their header, used to filter the list with the search bar.
+        private readonly List<FilterGroup> _filterGroups = new();
 
         private void InitToggleWalk()
         {
@@ -112,20 +116,27 @@ namespace Content.Client.Options.UI.Tabs
             };
 
             var first = true;
+            FilterGroup? currentGroup = null;
 
             void AddHeader(string headerContents)
             {
+                Control? spacer = null;
                 if (!first)
                 {
-                    KeybindsContainer.AddChild(new Control { MinSize = new Vector2(0, 8) });
+                    spacer = new Control { MinSize = new Vector2(0, 8) };
+                    KeybindsContainer.AddChild(spacer);
                 }
 
                 first = false;
-                KeybindsContainer.AddChild(new Label
+                var header = new Label
                 {
                     Text = Loc.GetString(headerContents),
                     StyleClasses = { StyleClass.LabelKeyText }
-                });
+                };
+                KeybindsContainer.AddChild(header);
+
+                currentGroup = new FilterGroup { Spacer = spacer, Header = header };
+                _filterGroups.Add(currentGroup);
             }
 
             void AddButton(BoundKeyFunction function)
@@ -133,6 +144,8 @@ namespace Content.Client.Options.UI.Tabs
                 var control = new KeyControl(this, function);
                 KeybindsContainer.AddChild(control);
                 _keyControls.Add(function, control);
+                currentGroup?.Items.Add((control,
+                    Loc.GetString($"ui-options-function-{CaseConversion.PascalToKebab(function.FunctionName)}")));
             }
 
             void AddCheckBox(string checkBoxName, bool currentState, Action<BaseButton.ButtonToggledEventArgs>? callBackOnClick)
@@ -142,6 +155,7 @@ namespace Content.Client.Options.UI.Tabs
                 newCheckBox.OnToggled += callBackOnClick;
 
                 KeybindsContainer.AddChild(newCheckBox);
+                currentGroup?.Items.Add((newCheckBox, newCheckBox.Text ?? ""));
             }
 
             void AddToggleCvarCheckBox(string checkBoxName, CVarDef<bool> cvar)
@@ -155,6 +169,7 @@ namespace Content.Client.Options.UI.Tabs
                 };
 
                 KeybindsContainer.AddChild(newCheckBox);
+                currentGroup?.Items.Add((newCheckBox, newCheckBox.Text ?? ""));
             }
 
             AddHeader("ui-options-header-general");
@@ -171,6 +186,7 @@ namespace Content.Client.Options.UI.Tabs
             AddCheckBox("ui-options-hotkey-toggle-walk", _cfg.GetCVar(CCVars.ToggleWalk), HandleToggleWalk);
             InitToggleWalk();
             AddButton(ContentKeyFunctions.ToggleKnockdown);
+            AddButton(ContentKeyFunctions.Sprint); // Ported from Goobstation
 
             AddHeader("ui-options-header-camera");
             AddButton(EngineKeyFunctions.CameraRotateLeft);
@@ -328,6 +344,36 @@ namespace Content.Client.Options.UI.Tabs
             foreach (var control in _keyControls.Values)
             {
                 UpdateKeyControl(control);
+            }
+
+            SearchBar.OnTextChanged += args => FilterBinds(args.Text);
+        }
+
+        // Shows only the rows (and their headers) whose name matches the search text.
+        private void FilterBinds(string search)
+        {
+            var query = search.Trim();
+            var showAll = string.IsNullOrEmpty(query);
+
+            foreach (var group in _filterGroups)
+            {
+                var headerMatch = !showAll
+                    && group.Header.Text != null
+                    && group.Header.Text.Contains(query, StringComparison.CurrentCultureIgnoreCase);
+
+                var anyVisible = false;
+                foreach (var (control, text) in group.Items)
+                {
+                    var visible = showAll || headerMatch
+                        || text.Contains(query, StringComparison.CurrentCultureIgnoreCase);
+                    control.Visible = visible;
+                    anyVisible |= visible;
+                }
+
+                var headerVisible = showAll || anyVisible || headerMatch;
+                group.Header.Visible = headerVisible;
+                if (group.Spacer != null)
+                    group.Spacer.Visible = headerVisible;
             }
         }
 
@@ -518,6 +564,14 @@ namespace Content.Client.Options.UI.Tabs
             }
 
             _deferCommands.Clear();
+        }
+
+        // A header and the filterable rows beneath it, used by the keybind search bar.
+        private sealed class FilterGroup
+        {
+            public Control? Spacer;
+            public Label Header = default!;
+            public readonly List<(Control Control, string Text)> Items = new();
         }
 
         private sealed class KeyControl : Control

@@ -478,6 +478,8 @@ namespace Content.Shared.Movement.Systems
             // Logger.Info($"[{_gameTiming.CurTick}/{subTick}] Sprint: {enabled}");
 
             SetMoveInput(entity, subTick, walking, MoveButtons.Walk);
+
+            RaiseLocalEvent(entity, new ToggleWalkEvent(walking)); // Ported from Goobstation
         }
 
         /// <summary>

@@ -103,6 +103,7 @@
   - type: SleepEmitSound
   - type: SSDIndicator
   - type: StandingState
+  - type: Sprinter # Ported from Goobstation
   - type: Crawler
   - type: Dna
   - type: MindContainer
