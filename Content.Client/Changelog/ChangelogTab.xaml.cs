@@ -31,15 +31,17 @@ public sealed partial class ChangelogTab : Control
     public void PopulateChangelog(ChangelogManager.Changelog changelog)
     {
         var byDay = changelog.Entries
-            .GroupBy(e => e.Time.ToLocalTime().Date)
-            .OrderByDescending(c => c.Key);
+            .GroupBy(e => (Date: e.Time.ToLocalTime().Date, e.Version))
+            .OrderByDescending(c => c.Key.Date)
+            .ThenByDescending(c => c.Key.Version);
 
         var hasRead = changelog.Name != MainChangelogName ||
                       _changelog.MaxId <= _changelog.LastReadId;
 
         foreach (var dayEntries in byDay)
         {
-            var day = dayEntries.Key;
+            var day = dayEntries.Key.Date;
+            var version = dayEntries.Key.Version;
 
             var groupedEntries = dayEntries
                 .GroupBy(c => (c.Author, Read: c.Id <= _changelog.LastReadId))
@@ -55,15 +57,9 @@ public sealed partial class ChangelogTab : Control
             else
                 dayNice = day.ToShortDateString();
 
-            // Append any fork version(s) recorded for this day's entries (e.g. "iss14:1.5.0").
-            var versions = dayEntries
-                .Select(e => e.Version)
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Distinct()
-                .ToArray();
-
-            if (versions.Length > 0)
-                dayNice = $"{dayNice} — {string.Join(", ", versions)}";
+            // Append the fork release version for this group, when one is recorded (e.g. "iss14:1.4.0").
+            if (!string.IsNullOrWhiteSpace(version))
+                dayNice = $"{dayNice} — {version}";
 
             ChangelogBody.AddChild(new Label
             {
