@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Content.Shared.Barks;
 using Content.Shared.CCVar;
 using Content.Shared.GameTicking;
 using Content.Shared.Humanoid;
@@ -31,6 +32,7 @@ namespace Content.Shared.Preferences
     public sealed partial class HumanoidCharacterProfile
     {
         public static readonly ProtoId<SpeciesPrototype> DefaultSpecies = "Human";
+        public static readonly ProtoId<BarkPrototype> DefaultBarkVoice = "Alto"; // Barks
         private static readonly Regex RestrictedNameRegex = new(@"[^A-Za-z0-9 '\-]");
         private static readonly Regex ICNameCaseRegex = new(@"^(?<word>\w)|\b(?<word>\w)(?=\w*$)");
 
@@ -123,6 +125,12 @@ namespace Content.Shared.Preferences
         public PreferenceUnavailableMode PreferenceUnavailable { get; private set; } =
             PreferenceUnavailableMode.SpawnAsOverflow;
 
+        /// <summary>
+        /// The procedural voice "bark" used by this character. Barks
+        /// </summary>
+        [DataField]
+        public ProtoId<BarkPrototype> BarkVoice { get; set; } = DefaultBarkVoice;
+
         public HumanoidCharacterProfile(
             string name,
             string flavortext,
@@ -183,6 +191,7 @@ namespace Content.Shared.Preferences
                 new HashSet<ProtoId<TraitPrototype>>(other.TraitPreferences),
                 new Dictionary<string, RoleLoadout>(other.Loadouts))
         {
+            BarkVoice = other.BarkVoice; // Barks
         }
 
         /// <summary>
@@ -276,6 +285,11 @@ namespace Content.Shared.Preferences
         public HumanoidCharacterProfile WithFlavorText(string flavorText)
         {
             return new(this) { FlavorText = flavorText };
+        }
+
+        public HumanoidCharacterProfile WithBarkVoice(ProtoId<BarkPrototype> barkVoice)
+        {
+            return new(this) { BarkVoice = barkVoice };
         }
 
         public HumanoidCharacterProfile WithAge(int age)
@@ -474,6 +488,7 @@ namespace Content.Shared.Preferences
             if (!_traitPreferences.SequenceEqual(other._traitPreferences)) return false;
             if (!Loadouts.SequenceEqual(other.Loadouts)) return false;
             if (FlavorText != other.FlavorText) return false;
+            if (BarkVoice != other.BarkVoice) return false; // Barks
             return Appearance.Equals(other.Appearance);
         }
 
@@ -645,6 +660,14 @@ namespace Content.Shared.Preferences
             {
                 _loadouts.Remove(value);
             }
+
+            // Barks: fall back to the default voice if the chosen one is missing or not allowed for this species.
+            if (!prototypeManager.TryIndex(BarkVoice, out var barkProto)
+                || !barkProto.RoundStart
+                || (barkProto.SpeciesWhitelist != null && !barkProto.SpeciesWhitelist.Contains(Species)))
+            {
+                BarkVoice = DefaultBarkVoice;
+            }
         }
 
         /// <summary>
@@ -729,6 +752,7 @@ namespace Content.Shared.Preferences
             hashCode.Add(Appearance);
             hashCode.Add((int)SpawnPriority);
             hashCode.Add((int)PreferenceUnavailable);
+            hashCode.Add(BarkVoice); // Barks
             return hashCode.ToHashCode();
         }
 

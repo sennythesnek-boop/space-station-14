@@ -1,3 +1,5 @@
+using System.Linq;
+using Content.Shared.Barks;
 using Content.Shared.Examine;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.IdentityManagement;
@@ -30,6 +32,8 @@ public sealed partial class HumanoidProfileSystem : EntitySystem
         ent.Comp.Sex = profile.Sex;
         Dirty(ent);
 
+        SetBarkVoice(ent, profile.BarkVoice);
+
         var sexChanged = new SexChangedEvent(ent.Comp.Sex, profile.Sex);
         RaiseLocalEvent(ent, ref sexChanged);
 
@@ -37,6 +41,39 @@ public sealed partial class HumanoidProfileSystem : EntitySystem
         {
             _grammar.SetGender((ent, grammar), profile.Gender);
         }
+    }
+
+    /// <summary>
+    /// Ensures the entity has a <see cref="SpeechSynthesisComponent"/> set to the given bark voice,
+    /// falling back to a species-appropriate default if the requested voice isn't valid. Barks
+    /// </summary>
+    public void SetBarkVoice(Entity<HumanoidProfileComponent?> ent, ProtoId<BarkPrototype>? barkVoiceId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        var species = ent.Comp.Species;
+        ProtoId<BarkPrototype> voice = HumanoidCharacterProfile.DefaultBarkVoice;
+
+        if (barkVoiceId is { } id
+            && _prototype.TryIndex<BarkPrototype>(id, out var bark)
+            && (bark.SpeciesWhitelist == null || bark.SpeciesWhitelist.Contains(species)))
+        {
+            voice = id;
+        }
+        else
+        {
+            // Pick the first round-start voice valid for this species.
+            var fallback = _prototype.EnumeratePrototypes<BarkPrototype>()
+                .FirstOrDefault(o => o.RoundStart && (o.SpeciesWhitelist == null || o.SpeciesWhitelist.Contains(species)));
+
+            if (fallback != null)
+                voice = fallback.ID;
+        }
+
+        var comp = EnsureComp<SpeechSynthesisComponent>(ent);
+        comp.VoicePrototypeId = voice;
+        Dirty(ent, comp);
     }
 
     private void OnExamined(Entity<HumanoidProfileComponent> ent, ref ExaminedEvent args)

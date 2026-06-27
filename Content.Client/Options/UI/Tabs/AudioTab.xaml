@@ -21,6 +21,22 @@
                 <CheckBox Name="AdminSoundsCheckBox" Text="{Loc 'ui-options-admin-sounds'}" />
                 <CheckBox Name="BwoinkSoundCheckBox" Text="{Loc 'ui-options-bwoink-sound'}" />
             </BoxContainer>
+
+            <!-- Text-To-Speech -->
+            <Label Text="{Loc 'ui-options-tts-label'}"
+                   StyleClasses="LabelKeyText" Margin="0 12 0 0" />
+            <BoxContainer Name="TtsContainer" Orientation="Vertical" Margin="0 3 0 0">
+                <CheckBox Name="TtsEnabledCheckBox" Text="{Loc 'ui-options-tts-enabled'}" />
+                <ui:OptionSlider Name="SliderTtsVolume" Title="{Loc 'ui-options-tts-volume'}" />
+                <CheckBox Name="TtsReadingCheckBox" Text="{Loc 'ui-options-tts-reading'}" />
+                <Label Text="{Loc 'ui-options-tts-categories'}" Margin="0 6 0 0" />
+                <CheckBox Name="TtsSayCheckBox" Text="{Loc 'ui-options-tts-say'}" />
+                <CheckBox Name="TtsWhisperCheckBox" Text="{Loc 'ui-options-tts-whisper'}" />
+                <CheckBox Name="TtsRadioCheckBox" Text="{Loc 'ui-options-tts-radio'}" />
+                <CheckBox Name="TtsAnnouncementsCheckBox" Text="{Loc 'ui-options-tts-announcements'}" />
+                <CheckBox Name="TtsSystemCheckBox" Text="{Loc 'ui-options-tts-system'}" />
+                <CheckBox Name="TtsReadOwnCheckBox" Text="{Loc 'ui-options-tts-read-own'}" />
+            </BoxContainer>
         </BoxContainer>
         <ui:OptionsTabControlRow Name="Control" Access="Public" />
     </BoxContainer>

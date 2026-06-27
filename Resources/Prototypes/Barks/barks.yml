@@ -1,0 +1,193 @@
+# Procedural "bark" voices, ported from Goob-Station.
+# Only voices whose audio exists in this repo are included.
+
+# alto
+- type: soundCollection
+  id: AltoBark
+  files:
+  - /Audio/Voice/Talk/speak_2.ogg
+  - /Audio/Voice/Talk/speak_2_ask.ogg
+  - /Audio/Voice/Talk/speak_2_exclaim.ogg
+
+- type: bark
+  id: Alto
+  name: bark-name-alto
+  soundCollection:
+    collection: AltoBark
+
+# baritone
+- type: soundCollection
+  id: BaritoneBark
+  files:
+    - /Audio/Voice/Talk/speak_1.ogg
+    - /Audio/Voice/Talk/speak_1_ask.ogg
+    - /Audio/Voice/Talk/speak_1_exclaim.ogg
+
+- type: bark
+  id: Baritone
+  name: bark-name-baritone
+  volume: 1
+  soundCollection:
+    collection: BaritoneBark
+
+# bass
+- type: soundCollection
+  id: BassBark
+  files:
+    - /Audio/Voice/Talk/speak_4.ogg
+    - /Audio/Voice/Talk/speak_4_ask.ogg
+    - /Audio/Voice/Talk/speak_4_exclaim.ogg
+
+- type: bark
+  id: Bass
+  name: bark-name-bass
+  volume: 2
+  soundCollection:
+    collection: BassBark
+
+# tenor
+- type: soundCollection
+  id: TenorBark
+  files:
+    - /Audio/Voice/Talk/speak_3.ogg
+    - /Audio/Voice/Talk/speak_3_ask.ogg
+    - /Audio/Voice/Talk/speak_3_exclaim.ogg
+
+- type: bark
+  id: Tenor
+  name: bark-name-tenor
+  volume: 1
+  soundCollection:
+    collection: TenorBark
+
+# arachnid
+- type: soundCollection
+  id: ArachnidBark
+  files:
+    - /Audio/Voice/Talk/arachnid.ogg
+    - /Audio/Voice/Talk/arachnid_ask.ogg
+    - /Audio/Voice/Talk/arachnid_exclaim.ogg
+
+- type: bark
+  id: Arachnid
+  name: bark-name-arachnid
+  volume: 1
+  soundCollection:
+    collection: ArachnidBark
+  speciesWhitelist:
+    - Arachnid
+
+# lizard
+- type: soundCollection
+  id: LizardBark
+  files:
+    - /Audio/Voice/Talk/lizard.ogg
+    - /Audio/Voice/Talk/lizard_ask.ogg
+    - /Audio/Voice/Talk/lizard_exclaim.ogg
+
+- type: bark
+  id: Lizard
+  name: bark-name-lizard
+  volume: 0.4
+  soundCollection:
+    collection: LizardBark
+  speciesWhitelist:
+    - Reptilian
+
+# slime
+- type: soundCollection
+  id: SlimeBark
+  files:
+    - /Audio/Voice/Talk/slime.ogg
+    - /Audio/Voice/Talk/slime_ask.ogg
+    - /Audio/Voice/Talk/slime_exclaim.ogg
+
+- type: bark
+  id: Slime
+  name: bark-name-slime
+  volume: 0.5
+  soundCollection:
+    collection: SlimeBark
+  speciesWhitelist:
+    - SlimePerson
+
+# vox
+- type: soundCollection
+  id: VoxBark
+  files:
+    - /Audio/Voice/Talk/vox.ogg
+    - /Audio/Voice/Talk/vox_ask.ogg
+    - /Audio/Voice/Talk/vox_exclaim.ogg
+
+- type: bark
+  id: Vox
+  name: bark-name-vox
+  volume: 0.5
+  soundCollection:
+    collection: VoxBark
+  speciesWhitelist:
+    - Vox
+
+# pAI
+- type: soundCollection
+  id: PaiBark
+  files:
+    - /Audio/Voice/Talk/pai.ogg
+    - /Audio/Voice/Talk/pai_ask.ogg
+    - /Audio/Voice/Talk/pai_exclaim.ogg
+
+- type: bark
+  id: Pai
+  name: bark-name-pai
+  volume: 1
+  frequency: 0.4
+  soundCollection:
+    collection: PaiBark
+
+# squeak
+- type: soundCollection
+  id: SqueakBark
+  files:
+  - /Audio/Animals/mouse_squeak.ogg
+
+- type: bark
+  id: Squeak
+  name: bark-name-squeak
+  frequency: 0.3
+  minPitch: 0.8
+  maxPitch: 1.1
+  soundCollection:
+    collection: SqueakBark
+
+# robotic
+- type: soundCollection
+  id: BorgBark
+  files:
+    - /Audio/Voice/Talk/Silicon/borg.ogg
+    - /Audio/Voice/Talk/Silicon/borg_ask.ogg
+    - /Audio/Voice/Talk/Silicon/borg_exclaim.ogg
+
+- type: bark
+  id: Borg
+  name: bark-name-borg
+  volume: 0.7
+  frequency: 0.35
+  soundCollection:
+    collection: BorgBark
+
+# robotic (syndicate) - not selectable at round start
+- type: soundCollection
+  id: BorgSyndieBark
+  files:
+    - /Audio/Voice/Talk/Silicon/syndieborg.ogg
+    - /Audio/Voice/Talk/Silicon/syndieborg_ask.ogg
+    - /Audio/Voice/Talk/Silicon/syndieborg_exclaim.ogg
+
+- type: bark
+  id: BorgSyndie
+  name: bark-name-borg-syndie
+  roundStart: false
+  volume: 0.5
+  frequency: 0.35
+  soundCollection:
+    collection: BorgSyndieBark

@@ -13,6 +13,16 @@ public enum VoteToggle : byte
     Votekick,
 }
 
+/// <summary>Which vote-duration timer (in seconds) a field edits.</summary>
+public enum VoteTimer : byte
+{
+    Restart,
+    Preset,
+    Map,
+    Alone,
+    Votekick,
+}
+
 /// <summary>A selectable map or gamemode row: its id, display name, and whether it's in the active profile.</summary>
 [Serializable, NetSerializable]
 public struct VoteConfigItem(string id, string display, bool included)
@@ -32,6 +42,11 @@ public sealed class VoteConfigEuiState(
     bool mapVote,
     bool votekickVote,
     bool filterMapsByPlayerCount,
+    int restartTimer,
+    int presetTimer,
+    int mapTimer,
+    int aloneTimer,
+    int votekickTimer,
     List<string> mapProfiles,
     string activeMapProfile,
     List<VoteConfigItem> maps,
@@ -49,6 +64,12 @@ public sealed class VoteConfigEuiState(
     public readonly bool VotekickVote = votekickVote;
 
     public readonly bool FilterMapsByPlayerCount = filterMapsByPlayerCount;
+
+    public readonly int RestartTimer = restartTimer;
+    public readonly int PresetTimer = presetTimer;
+    public readonly int MapTimer = mapTimer;
+    public readonly int AloneTimer = aloneTimer;
+    public readonly int VotekickTimer = votekickTimer;
 
     public readonly List<string> MapProfiles = mapProfiles;
     public readonly string ActiveMapProfile = activeMapProfile;
@@ -72,6 +93,13 @@ public sealed class VoteConfigSetToggleMessage(VoteToggle toggle, bool value) : 
 public sealed class VoteConfigSetMapPlayerCountFilterMessage(bool value) : EuiMessageBase
 {
     public readonly bool Value = value;
+}
+
+[Serializable, NetSerializable]
+public sealed class VoteConfigSetTimerMessage(VoteTimer timer, int value) : EuiMessageBase
+{
+    public readonly VoteTimer Timer = timer;
+    public readonly int Value = value;
 }
 
 [Serializable, NetSerializable]

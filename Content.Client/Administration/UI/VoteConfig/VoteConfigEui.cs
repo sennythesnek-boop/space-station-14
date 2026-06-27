@@ -16,6 +16,7 @@ public sealed class VoteConfigEui : BaseEui
 
         _window.OnSetToggle += (toggle, value) => SendMessage(new VoteConfigSetToggleMessage(toggle, value));
         _window.OnSetMapPlayerCountFilter += value => SendMessage(new VoteConfigSetMapPlayerCountFilterMessage(value));
+        _window.OnSetTimer += (timer, value) => SendMessage(new VoteConfigSetTimerMessage(timer, value));
         _window.OnSetActiveProfile += (isMap, profile) => SendMessage(new VoteConfigSetActiveProfileMessage(isMap, profile));
         _window.OnCreateProfile += (isMap, name) => SendMessage(new VoteConfigCreateProfileMessage(isMap, name));
         _window.OnDeleteProfile += isMap => SendMessage(new VoteConfigDeleteProfileMessage(isMap));

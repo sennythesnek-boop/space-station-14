@@ -11,6 +11,12 @@ vote-config-restart = Restart vote
 vote-config-preset = Gamemode vote
 vote-config-map = Map vote
 vote-config-votekick = Votekick
+vote-config-timers = Vote timers (seconds)
+vote-config-timer-restart = Restart vote
+vote-config-timer-preset = Gamemode vote
+vote-config-timer-map = Map vote
+vote-config-timer-alone = When alone (map/preset/restart)
+vote-config-timer-votekick = Votekick
 vote-config-maps = Map pool (active list = random-on-restart + map vote)
 vote-config-map-filter-playercount = Filter map pool by player count
 vote-config-gamemodes = Gamemode pool (active list = random-on-restart + gamemode vote)

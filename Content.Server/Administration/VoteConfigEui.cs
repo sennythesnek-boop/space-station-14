@@ -45,7 +45,7 @@ public sealed partial class VoteConfigEui : BaseEui
     public override EuiStateBase GetNewState() => _state;
 
     private VoteConfigEuiState _state = new(false, true, true, true, false, true,
-        false, new(), "", new(), new(), "", new());
+        false, 60, 30, 90, 10, 45, new(), "", new(), new(), "", new());
 
     public void BuildState()
     {
@@ -73,6 +73,11 @@ public sealed partial class VoteConfigEui : BaseEui
             _config.GetToggle(VoteToggle.Map),
             _config.GetToggle(VoteToggle.Votekick),
             _config.FilterMapsByPlayerCount,
+            _config.GetTimer(VoteTimer.Restart),
+            _config.GetTimer(VoteTimer.Preset),
+            _config.GetTimer(VoteTimer.Map),
+            _config.GetTimer(VoteTimer.Alone),
+            _config.GetTimer(VoteTimer.Votekick),
             _config.MapProfileNames.ToList(),
             _config.ActiveMapProfile,
             maps,
@@ -97,6 +102,9 @@ public sealed partial class VoteConfigEui : BaseEui
                 break;
             case VoteConfigSetMapPlayerCountFilterMessage m:
                 _config.SetFilterMapsByPlayerCount(m.Value);
+                break;
+            case VoteConfigSetTimerMessage m:
+                _config.SetTimer(m.Timer, m.Value);
                 break;
             case VoteConfigSetActiveProfileMessage m:
                 _config.SetActiveProfile(m.IsMap, m.Profile);

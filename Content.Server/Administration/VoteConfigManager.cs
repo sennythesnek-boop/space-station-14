@@ -49,6 +49,19 @@ public sealed partial class VoteConfigManager
 
     private bool _filterMapsByPlayerCount;
 
+    // Vote-duration timers (seconds). Clamped to a sane range when set.
+    private const int MinTimer = 1;
+    private const int MaxTimer = 600;
+    private bool _timersPersisted;
+    private readonly Dictionary<VoteTimer, int> _timers = new()
+    {
+        [VoteTimer.Restart] = 60,
+        [VoteTimer.Preset] = 30,
+        [VoteTimer.Map] = 90,
+        [VoteTimer.Alone] = 10,
+        [VoteTimer.Votekick] = 45,
+    };
+
     private string _activeMapProfile = "";
     private readonly Dictionary<string, List<string>> _mapProfiles = new();
 
@@ -68,6 +81,12 @@ public sealed partial class VoteConfigManager
         {
             foreach (var (toggle, value) in _toggles)
                 _cfg.SetCVar(ToggleCVar(toggle), value);
+        }
+
+        if (_timersPersisted)
+        {
+            foreach (var (timer, value) in _timers)
+                _cfg.SetCVar(TimerCVar(timer), value);
         }
 
         _maps.RuntimeMapPoolFilterByPlayerCount = _filterMapsByPlayerCount;
@@ -105,6 +124,34 @@ public sealed partial class VoteConfigManager
             VoteToggle.Map => CCVars.VoteMapEnabled,
             VoteToggle.Votekick => CCVars.VotekickEnabled,
             _ => CCVars.VoteEnabled,
+        };
+    }
+
+    #endregion
+
+    #region Timers
+
+    public int GetTimer(VoteTimer timer) => _cfg.GetCVar(TimerCVar(timer));
+
+    public void SetTimer(VoteTimer timer, int value)
+    {
+        var clamped = Math.Clamp(value, MinTimer, MaxTimer);
+        _cfg.SetCVar(TimerCVar(timer), clamped);
+        _timers[timer] = clamped;
+        _timersPersisted = true;
+        Save();
+    }
+
+    private static CVarDef<int> TimerCVar(VoteTimer timer)
+    {
+        return timer switch
+        {
+            VoteTimer.Restart => CCVars.VoteTimerRestart,
+            VoteTimer.Preset => CCVars.VoteTimerPreset,
+            VoteTimer.Map => CCVars.VoteTimerMap,
+            VoteTimer.Alone => CCVars.VoteTimerAlone,
+            VoteTimer.Votekick => CCVars.VotekickTimer,
+            _ => CCVars.VoteTimerMap,
         };
     }
 
@@ -285,6 +332,13 @@ public sealed partial class VoteConfigManager
             _toggles[VoteToggle.Map] = data.MapVote;
             _toggles[VoteToggle.Votekick] = data.VotekickVote;
 
+            _timersPersisted = data.TimersPersisted;
+            _timers[VoteTimer.Restart] = data.RestartTimer;
+            _timers[VoteTimer.Preset] = data.PresetTimer;
+            _timers[VoteTimer.Map] = data.MapTimer;
+            _timers[VoteTimer.Alone] = data.AloneTimer;
+            _timers[VoteTimer.Votekick] = data.VotekickTimer;
+
             _filterMapsByPlayerCount = data.FilterMapsByPlayerCount;
 
             _activeMapProfile = data.ActiveMapProfile;
@@ -313,6 +367,12 @@ public sealed partial class VoteConfigManager
             PresetVote = _toggles[VoteToggle.Preset],
             MapVote = _toggles[VoteToggle.Map],
             VotekickVote = _toggles[VoteToggle.Votekick],
+            TimersPersisted = _timersPersisted,
+            RestartTimer = _timers[VoteTimer.Restart],
+            PresetTimer = _timers[VoteTimer.Preset],
+            MapTimer = _timers[VoteTimer.Map],
+            AloneTimer = _timers[VoteTimer.Alone],
+            VotekickTimer = _timers[VoteTimer.Votekick],
             FilterMapsByPlayerCount = _filterMapsByPlayerCount,
             ActiveMapProfile = _activeMapProfile,
             MapProfiles = _mapProfiles.ToDictionary(kv => kv.Key, kv => kv.Value),
@@ -341,6 +401,12 @@ public sealed partial class VoteConfigManager
         public bool PresetVote { get; set; } = true;
         public bool MapVote { get; set; }
         public bool VotekickVote { get; set; } = true;
+        public bool TimersPersisted { get; set; }
+        public int RestartTimer { get; set; } = 60;
+        public int PresetTimer { get; set; } = 30;
+        public int MapTimer { get; set; } = 90;
+        public int AloneTimer { get; set; } = 10;
+        public int VotekickTimer { get; set; } = 45;
         public bool FilterMapsByPlayerCount { get; set; }
         public string ActiveMapProfile { get; set; } = "";
         public Dictionary<string, List<string>> MapProfiles { get; set; } = new();

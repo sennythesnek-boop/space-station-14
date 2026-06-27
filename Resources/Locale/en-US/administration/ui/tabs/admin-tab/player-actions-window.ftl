@@ -10,3 +10,4 @@ admin-player-actions-window-role-time-reqs = Role Requirements
 admin-player-actions-window-voting-config = Voting Config
 admin-player-actions-window-combat-stats = Combat Stats
 admin-player-actions-window-new-life-config = New Life Config
+admin-player-actions-window-tts-config = TTS Config

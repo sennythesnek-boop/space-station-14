@@ -186,7 +186,10 @@ namespace Content.Server.Preferences.Managers
                 antags.ToHashSet(),
                 traits.ToHashSet(),
                 loadouts
-            );
+            )
+            {
+                BarkVoice = profile.BarkVoice ?? HumanoidCharacterProfile.DefaultBarkVoice, // Barks
+            };
         }
 
         private async void HandleSelectCharacterMessage(MsgSelectCharacter message)

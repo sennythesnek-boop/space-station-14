@@ -65,6 +65,17 @@ public sealed partial class AudioTab : Control
         Control.AddOptionCheckBox(CCVars.AdminSoundsEnabled, AdminSoundsCheckBox);
         Control.AddOptionCheckBox(CCVars.BwoinkSoundEnabled, BwoinkSoundCheckBox);
 
+        // Text-To-Speech
+        Control.AddOptionCheckBox(CCVars.TtsClientEnabled, TtsEnabledCheckBox);
+        Control.AddOptionPercentSlider(CCVars.TtsVolume, SliderTtsVolume, scale: 1f);
+        Control.AddOptionCheckBox(CCVars.TtsReading, TtsReadingCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadSay, TtsSayCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadWhisper, TtsWhisperCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadRadio, TtsRadioCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadAnnouncements, TtsAnnouncementsCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadSystem, TtsSystemCheckBox);
+        Control.AddOptionCheckBox(CCVars.TtsReadOwn, TtsReadOwnCheckBox);
+
         Control.Initialize();
     }
 

@@ -231,6 +231,16 @@ namespace Content.Client.Lobby.UI
 
             #endregion SpawnPriority
 
+            #region Barks
+
+            if (_cfgManager.GetCVar(CCVars.TtsEnabled))
+            {
+                BarksContainer.Visible = true;
+                InitializeBarkVoice();
+            }
+
+            #endregion Barks
+
             #region Eyes
 
             EyeColorPicker.OnEyeColorPicked += newColor =>
@@ -372,6 +382,8 @@ namespace Content.Client.Lobby.UI
             UpdateGenderControls();
             UpdateSkinColor();
             UpdateSpawnPriorityControls();
+            if (_cfgManager.GetCVar(CCVars.TtsEnabled))
+                UpdateBarkVoice();
             UpdateAgeEdit();
             UpdateEyePickers();
             UpdateSaveButton();

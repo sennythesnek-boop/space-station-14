@@ -14,6 +14,28 @@
                 <CheckBox Name="MapCheck" Text="{Loc vote-config-map}" />
                 <CheckBox Name="VotekickCheck" Text="{Loc vote-config-votekick}" />
 
+                <Label Text="{Loc vote-config-timers}" StyleClasses="LabelHeading" Margin="0 12 0 2" />
+                <BoxContainer Orientation="Horizontal" Margin="0 1 0 0">
+                    <Label Text="{Loc vote-config-timer-restart}" MinWidth="200" />
+                    <LineEdit Name="RestartTimerEdit" MinWidth="70" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 1 0 0">
+                    <Label Text="{Loc vote-config-timer-preset}" MinWidth="200" />
+                    <LineEdit Name="PresetTimerEdit" MinWidth="70" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 1 0 0">
+                    <Label Text="{Loc vote-config-timer-map}" MinWidth="200" />
+                    <LineEdit Name="MapTimerEdit" MinWidth="70" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 1 0 0">
+                    <Label Text="{Loc vote-config-timer-alone}" MinWidth="200" />
+                    <LineEdit Name="AloneTimerEdit" MinWidth="70" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 1 0 0">
+                    <Label Text="{Loc vote-config-timer-votekick}" MinWidth="200" />
+                    <LineEdit Name="VotekickTimerEdit" MinWidth="70" />
+                </BoxContainer>
+
                 <Label Text="{Loc vote-config-maps}" StyleClasses="LabelHeading" Margin="0 12 0 2" />
                 <CheckBox Name="MapFilterPlayerCountCheck" Text="{Loc vote-config-map-filter-playercount}" Margin="0 0 0 2" />
                 <BoxContainer Orientation="Horizontal">

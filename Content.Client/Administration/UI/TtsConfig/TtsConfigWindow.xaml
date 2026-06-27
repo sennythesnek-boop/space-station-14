@@ -1,0 +1,82 @@
+<controls:FancyWindow xmlns="https://spacestation14.io"
+                      xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+                      Title="{Loc tts-config-title}"
+                      Resizable="True"
+                      MinSize="460 560"
+                      SetSize="560 720">
+    <PanelContainer StyleClasses="BackgroundDark">
+        <ScrollContainer HScrollEnabled="False" VerticalExpand="True" HorizontalExpand="True">
+            <BoxContainer Orientation="Vertical" Margin="8" HorizontalExpand="True">
+
+                <Label Text="{Loc tts-config-backend}" StyleClasses="LabelHeading" />
+                <CheckBox Name="EnabledCheck" Text="{Loc tts-config-enabled}" />
+
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-url}" MinWidth="150" />
+                    <LineEdit Name="UrlEdit" HorizontalExpand="True" PlaceHolder="http://localhost:8000/generate" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-speakers-url}" MinWidth="150" />
+                    <LineEdit Name="SpeakersUrlEdit" HorizontalExpand="True" PlaceHolder="http://localhost:8880/v1/audio/voices" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-models-url}" MinWidth="150" />
+                    <LineEdit Name="ModelsUrlEdit" HorizontalExpand="True" PlaceHolder="http://localhost:8880/v1/models" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-token}" MinWidth="150" />
+                    <LineEdit Name="TokenEdit" HorizontalExpand="True" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-default-speaker}" MinWidth="150" />
+                    <controls:SearchableDropdown Name="DefaultSpeakerOption" HorizontalExpand="True" />
+                    <Button Name="RefreshButton" Text="{Loc tts-config-refresh}" Margin="4 0 0 0" />
+                </BoxContainer>
+
+                <Label Text="{Loc tts-config-params}" StyleClasses="LabelHeading" Margin="0 10 0 0" />
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-model}" MinWidth="150" />
+                    <controls:SearchableDropdown Name="ModelOption" HorizontalExpand="True" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-speed}" MinWidth="150" />
+                    <LineEdit Name="SpeedEdit" MinWidth="100" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-max-length}" MinWidth="150" />
+                    <LineEdit Name="MaxLengthEdit" MinWidth="100" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-queue-delay}" MinWidth="150" />
+                    <LineEdit Name="QueueDelayEdit" MinWidth="100" />
+                </BoxContainer>
+
+                <Label Text="{Loc tts-config-test}" StyleClasses="LabelHeading" Margin="0 10 0 0" />
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <Label Text="{Loc tts-config-test-speaker}" MinWidth="150" />
+                    <controls:SearchableDropdown Name="TestSpeakerOption" HorizontalExpand="True" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                    <LineEdit Name="TestTextEdit" HorizontalExpand="True" PlaceHolder="{Loc tts-config-test-text-hint}" />
+                    <Button Name="TestButton" Text="{Loc tts-config-test-button}" Margin="4 0 0 0" />
+                </BoxContainer>
+
+                <Label Name="StatusLabel" Margin="0 8 0 0" />
+
+                <Label Text="{Loc tts-config-voices}" StyleClasses="LabelHeading" Margin="0 12 0 0" />
+                <Label Text="{Loc tts-config-voices-hint}" Margin="0 0 0 4" />
+                <BoxContainer Orientation="Horizontal" Margin="0 0 0 2">
+                    <Button Name="AutoGenderButton" Text="{Loc tts-config-auto-gender}" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 0 0 4">
+                    <Label Text="{Loc tts-config-set-all}" />
+                    <Button Name="AllNoneButton" Text="{Loc tts-config-gender-none}" Margin="4 0 0 0" />
+                    <Button Name="AllMaleButton" Text="{Loc tts-config-gender-male}" Margin="4 0 0 0" />
+                    <Button Name="AllFemaleButton" Text="{Loc tts-config-gender-female}" Margin="4 0 0 0" />
+                </BoxContainer>
+                <BoxContainer Name="VoiceList" Orientation="Vertical" />
+
+            </BoxContainer>
+        </ScrollContainer>
+    </PanelContainer>
+</controls:FancyWindow>

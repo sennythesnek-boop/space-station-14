@@ -92,6 +92,13 @@
                                     <Control HorizontalExpand="True"/>
                                     <OptionButton Name="SpawnPriorityButton" HorizontalAlignment="Right" />
                                 </BoxContainer>
+                                <!-- Bark Voice -->
+                                <BoxContainer Name="BarksContainer" HorizontalExpand="True" Visible="False">
+                                    <Label Text="{Loc 'humanoid-profile-editor-bark-voice-label'}" />
+                                    <Control HorizontalExpand="True"/>
+                                    <Button Name="BarkVoicePlayButton" Text="{Loc 'humanoid-profile-editor-bark-voice-play'}" MaxWidth="80" Margin="0 0 4 0" />
+                                    <OptionButton Name="BarkVoiceButton" HorizontalAlignment="Right" />
+                                </BoxContainer>
                             </BoxContainer>
                             <!-- Skin -->
                             <BoxContainer Margin="10" HorizontalExpand="True" Orientation="Vertical">

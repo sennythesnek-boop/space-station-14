@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Client.UserInterface.Systems.Guidebook;
+using Content.Shared.CCVar;
 using Content.Shared.Guidebook;
 using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Prototypes;
@@ -189,6 +190,9 @@ public sealed partial class HumanoidProfileEditor
         RefreshLoadouts();
         UpdateSexControls(); // update sex for new species
         UpdateSpeciesGuidebookIcon();
+        // In case there's species restrictions for bark voices
+        if (_cfgManager.GetCVar(CCVars.TtsEnabled))
+            UpdateBarkVoice();
         ReloadPreview();
     }
 

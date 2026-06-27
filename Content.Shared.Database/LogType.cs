@@ -483,4 +483,9 @@ public enum LogType
     /// Events related to players connecting/disconnecting.
     /// </summary>
     Connection = 104,
+
+    /// <summary>
+    /// Text-To-Speech backend health (e.g. the synthesis server going offline/online).
+    /// </summary>
+    Tts = 105,
 }

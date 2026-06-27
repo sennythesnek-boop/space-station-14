@@ -13,6 +13,7 @@ public sealed partial class VoteConfigWindow : FancyWindow
 {
     public event Action<VoteToggle, bool>? OnSetToggle;
     public event Action<bool>? OnSetMapPlayerCountFilter;
+    public event Action<VoteTimer, int>? OnSetTimer;
     public event Action<bool, string>? OnSetActiveProfile;
     public event Action<bool, string>? OnCreateProfile;
     public event Action<bool>? OnDeleteProfile;
@@ -21,6 +22,9 @@ public sealed partial class VoteConfigWindow : FancyWindow
     private List<string> _mapProfiles = new();
     private List<string> _presetProfiles = new();
     private bool _updating;
+
+    // Last known-good value for each timer field, used to restore on invalid input.
+    private readonly Dictionary<VoteTimer, int> _timerValues = new();
 
     public VoteConfigWindow()
     {
@@ -37,6 +41,12 @@ public sealed partial class VoteConfigWindow : FancyWindow
             if (!_updating)
                 OnSetMapPlayerCountFilter?.Invoke(a.Pressed);
         };
+
+        WireTimer(RestartTimerEdit, VoteTimer.Restart);
+        WireTimer(PresetTimerEdit, VoteTimer.Preset);
+        WireTimer(MapTimerEdit, VoteTimer.Map);
+        WireTimer(AloneTimerEdit, VoteTimer.Alone);
+        WireTimer(VotekickTimerEdit, VoteTimer.Votekick);
 
         MapProfileOption.OnItemSelected += a =>
         {
@@ -73,6 +83,26 @@ public sealed partial class VoteConfigWindow : FancyWindow
             OnSetToggle?.Invoke(toggle, value);
     }
 
+    private void WireTimer(LineEdit edit, VoteTimer timer)
+    {
+        // Commit on Enter and when the field loses focus.
+        edit.OnTextEntered += _ => CommitTimer(edit, timer);
+        edit.OnFocusExit += _ => CommitTimer(edit, timer);
+    }
+
+    private void CommitTimer(LineEdit edit, VoteTimer timer)
+    {
+        if (_updating)
+            return;
+
+        // On valid input, send it (the server clamps and echoes the value back via state).
+        // On invalid input, restore the last known-good value.
+        if (int.TryParse(edit.Text.Trim(), out var value))
+            OnSetTimer?.Invoke(timer, value);
+        else if (_timerValues.TryGetValue(timer, out var last))
+            edit.Text = last.ToString();
+    }
+
     public void SetState(VoteConfigEuiState state)
     {
         _updating = true;
@@ -88,6 +118,12 @@ public sealed partial class VoteConfigWindow : FancyWindow
             MapCheck.Disabled = VotekickCheck.Disabled =
             MapFilterPlayerCountCheck.Disabled = !state.CanEdit;
         MapCreateButton.Disabled = MapDeleteButton.Disabled = !state.CanEdit;
+
+        SetTimerField(RestartTimerEdit, VoteTimer.Restart, state.RestartTimer, state.CanEdit);
+        SetTimerField(PresetTimerEdit, VoteTimer.Preset, state.PresetTimer, state.CanEdit);
+        SetTimerField(MapTimerEdit, VoteTimer.Map, state.MapTimer, state.CanEdit);
+        SetTimerField(AloneTimerEdit, VoteTimer.Alone, state.AloneTimer, state.CanEdit);
+        SetTimerField(VotekickTimerEdit, VoteTimer.Votekick, state.VotekickTimer, state.CanEdit);
         PresetCreateButton.Disabled = PresetDeleteButton.Disabled = !state.CanEdit;
 
         _mapProfiles = state.MapProfiles;
@@ -99,6 +135,13 @@ public sealed partial class VoteConfigWindow : FancyWindow
 
         BuildItems(MapList, state.Maps, true, state.CanEdit, state.ActiveMapProfile.Length != 0);
         BuildItems(PresetList, state.Presets, false, state.CanEdit, state.ActivePresetProfile.Length != 0);
+    }
+
+    private void SetTimerField(LineEdit edit, VoteTimer timer, int value, bool canEdit)
+    {
+        _timerValues[timer] = value;
+        edit.Text = value.ToString();
+        edit.Editable = canEdit;
     }
 
     private static string ProfileValue(IReadOnlyList<string> profiles, int id)
