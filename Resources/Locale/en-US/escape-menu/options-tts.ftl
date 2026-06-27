@@ -1,7 +1,7 @@
 ui-options-tts-label = Text-To-Speech
 ui-options-tts-enabled = Enable text-to-speech
 ui-options-tts-volume = TTS volume
-ui-options-tts-reading = Read messages aloud (off = gibberish blips)
+ui-options-tts-reading = Read messages aloud, if available (off = gibberish blips)
 ui-options-tts-categories = Voice these messages:
 ui-options-tts-say = Local speech
 ui-options-tts-whisper = Whispers

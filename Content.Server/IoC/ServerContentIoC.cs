@@ -66,6 +66,7 @@ internal static class ServerContentIoC
         deps.Register<RoleRequirementOverrideManager>();
         deps.Register<VoteConfigManager>();
         deps.Register<NewLifeManager>();
+        deps.Register<UserMigrationManager>();
         deps.Register<UserDbDataManager>();
         deps.Register<ServerInfoManager>();
         deps.Register<DiscordWebhook>();

@@ -160,6 +160,36 @@ namespace Content.Server.Database
             ImmutableTypedHwid? hwId);
         Task<PlayerRecord?> GetPlayerRecordByUserName(string userName, CancellationToken cancel = default);
         Task<PlayerRecord?> GetPlayerRecordByUserId(NetUserId userId, CancellationToken cancel = default);
+
+        /// <summary>All player records with the exact given username, newest seen first.</summary>
+        Task<List<PlayerRecord>> GetPlayerRecordsByUserNameAsync(string userName, CancellationToken cancel = default);
+
+        /// <summary>A page of player records enriched for the <c>playerrecords</c> browser.</summary>
+        Task<List<PlayerRecordInfo>> GetPlayerRecordsInfoAsync(
+            string? filter,
+            int limit,
+            int offset,
+            CancellationToken cancel = default);
+        #endregion
+
+        #region User Migration
+        /// <summary>Most recent migration log entries (auto, pending and manual), newest first.</summary>
+        Task<List<MigrationLog>> GetMigrationLogsAsync(int limit, CancellationToken cancel = default);
+        Task<MigrationLog?> GetMigrationLogAsync(int id, CancellationToken cancel = default);
+        Task<int> AddMigrationLogAsync(MigrationLog log);
+        Task UpdateMigrationLogStatusAsync(int id, MigrationStatus status, Guid? performedBy, string? detail);
+
+        /// <summary>True if a completed migration already moved this GUID's data away.</summary>
+        Task<bool> IsCompletedMigrationSourceAsync(Guid source, CancellationToken cancel = default);
+
+        /// <summary>True if a migration log entry (any state) already links this source to this target.</summary>
+        Task<bool> MigrationExistsAsync(Guid source, Guid target, CancellationToken cancel = default);
+
+        /// <summary>
+        /// Re-point the selected groups of per-user data from <paramref name="source"/> to
+        /// <paramref name="target"/> in one transaction. Returns a per-table summary of what moved.
+        /// </summary>
+        Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel = default);
         #endregion
 
         #region Connection Logs
@@ -624,6 +654,64 @@ namespace Content.Server.Database
         {
             DbReadOpsMetric.Inc();
             return RunDbCommand(() => _db.GetPlayerRecordByUserId(userId, cancel));
+        }
+
+        public Task<List<PlayerRecord>> GetPlayerRecordsByUserNameAsync(string userName, CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerRecordsByUserNameAsync(userName, cancel));
+        }
+
+        public Task<List<PlayerRecordInfo>> GetPlayerRecordsInfoAsync(
+            string? filter,
+            int limit,
+            int offset,
+            CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerRecordsInfoAsync(filter, limit, offset, cancel));
+        }
+
+        public Task<List<MigrationLog>> GetMigrationLogsAsync(int limit, CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetMigrationLogsAsync(limit, cancel));
+        }
+
+        public Task<MigrationLog?> GetMigrationLogAsync(int id, CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetMigrationLogAsync(id, cancel));
+        }
+
+        public Task<int> AddMigrationLogAsync(MigrationLog log)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.AddMigrationLogAsync(log));
+        }
+
+        public Task UpdateMigrationLogStatusAsync(int id, MigrationStatus status, Guid? performedBy, string? detail)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.UpdateMigrationLogStatusAsync(id, status, performedBy, detail));
+        }
+
+        public Task<bool> IsCompletedMigrationSourceAsync(Guid source, CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.IsCompletedMigrationSourceAsync(source, cancel));
+        }
+
+        public Task<bool> MigrationExistsAsync(Guid source, Guid target, CancellationToken cancel = default)
+        {
+            DbReadOpsMetric.Inc();
+            return RunDbCommand(() => _db.MigrationExistsAsync(source, target, cancel));
+        }
+
+        public Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel = default)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.MigrateUserDataAsync(source, target, scope, cancel));
         }
 
         public Task<int> AddConnectionLogAsync(

@@ -31,7 +31,6 @@ public sealed partial class TTSSystem : EntitySystem
 {
     [Dependency] private IConfigurationManager _cfg = default!;
     [Dependency] private IPrototypeManager _proto = default!;
-    [Dependency] private ISharedPlayerManager _playerManager = default!;
     [Dependency] private ISharedAdminLogManager _adminLogger = default!;
 
     private readonly HttpClient _http = new();
@@ -148,14 +147,13 @@ public sealed partial class TTSSystem : EntitySystem
         if (!TryComp<HumanoidProfileComponent>(ent, out var profile))
             return def;
 
-        // Seed by account so the same player always gets the same voice; fall back to the entity
-        // for non-player speakers (NPCs).
-        var seed = _playerManager.TryGetSessionByEntity(ent, out var session)
-            ? session.UserId.UserId.GetHashCode()
-            : ev.Source.GetHashCode();
+        // Seed by the character's name so a given character always gets the same voice (and two
+        // different characters differ), stable across restarts. Uses a deterministic hash because
+        // string.GetHashCode() is randomized per process.
+        var seed = StableHash(MetaData(ent).EntityName);
 
         // Male/female pick from the matching pool; any other gender (they/them, it/its) picks a
-        // random voice from the whole assigned pool. Stable per player either way.
+        // random voice from the whole assigned pool. Stable per character either way.
         List<string> pool;
         switch (profile.Gender)
         {
@@ -186,6 +184,18 @@ public sealed partial class TTSSystem : EntitySystem
 
     private List<string> AllAssignedVoices()
         => _genderMap.Keys.OrderBy(x => x, StringComparer.Ordinal).ToList();
+
+    /// <summary>Deterministic string hash (FNV-1a), unlike <see cref="string.GetHashCode"/> which is randomized per process.</summary>
+    private static int StableHash(string text)
+    {
+        unchecked
+        {
+            var hash = 2166136261u;
+            foreach (var c in text)
+                hash = (hash ^ c) * 16777619u;
+            return (int) hash;
+        }
+    }
 
     #endregion
 

@@ -5,9 +5,9 @@ using Robust.Shared.Console;
 namespace Content.Server.Administration.Commands;
 
 [AdminCommand(AdminFlags.Server)]
-public sealed class TtsConfigCommand : LocalizedCommands
+public sealed partial class TtsConfigCommand : LocalizedCommands
 {
-    [Dependency] private readonly EuiManager _euis = default!;
+    [Dependency] private EuiManager _euis = default!;
 
     public override string Command => "ttsconfig";
 

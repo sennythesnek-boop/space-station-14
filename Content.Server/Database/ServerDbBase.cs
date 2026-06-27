@@ -12,6 +12,7 @@ using Content.Shared.Administration.Logs;
 using Content.Shared.Construction.Prototypes;
 using Content.Shared.Database;
 using Content.Shared.Humanoid;
+using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
 using Microsoft.EntityFrameworkCore;
@@ -589,6 +590,355 @@ namespace Content.Server.Database
                 new DateTimeOffset(NormalizeDatabaseTime(player.LastSeenTime)),
                 player.LastSeenAddress,
                 player.LastSeenHWId);
+        }
+
+        #endregion
+
+        #region Player Records Browser
+
+        /// <summary>
+        /// All player records matching <paramref name="userName"/> exactly, newest first.
+        /// Used by the auto-migration path to find candidate "old" accounts (the same name can map to
+        /// several GUIDs after re-registrations).
+        /// </summary>
+        public async Task<List<PlayerRecord>> GetPlayerRecordsByUserNameAsync(string userName, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            var records = await db.DbContext.Player
+                .Where(p => p.LastSeenUserName == userName)
+                .OrderByDescending(p => p.LastSeenTime)
+                .ToListAsync(cancel);
+
+            return records.Select(r => MakePlayerRecord(r)).ToList();
+        }
+
+        /// <summary>
+        /// A page of player records (newest seen first) enriched with playtime/ban/migration info for the
+        /// <c>playerrecords</c> admin browser. <paramref name="filter"/> matches a username substring, or a
+        /// full GUID when it parses as one.
+        /// </summary>
+        public async Task<List<PlayerRecordInfo>> GetPlayerRecordsInfoAsync(
+            string? filter,
+            int limit,
+            int offset,
+            CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            IQueryable<Player> query = db.DbContext.Player;
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                var f = filter.Trim();
+                if (Guid.TryParse(f, out var guid))
+                    query = query.Where(p => p.UserId == guid);
+                else
+                    query = query.Where(p => EF.Functions.Like(p.LastSeenUserName, "%" + f + "%"));
+            }
+
+            var players = await query
+                .OrderByDescending(p => p.LastSeenTime)
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync(cancel);
+
+            var ids = players.Select(p => p.UserId).ToList();
+            var overall = (string) PlayTimeTrackingShared.TrackerOverall;
+
+            var playTimes = await db.DbContext.PlayTime
+                .Where(pt => ids.Contains(pt.PlayerId) && pt.Tracker == overall)
+                .ToDictionaryAsync(pt => pt.PlayerId, pt => pt.TimeSpent, cancel);
+
+            var banCounts = (await db.DbContext.BanPlayer
+                    .Where(bp => ids.Contains(bp.UserId))
+                    .GroupBy(bp => bp.UserId)
+                    .Select(g => new { g.Key, Count = g.Count() })
+                    .ToListAsync(cancel))
+                .ToDictionary(x => x.Key, x => x.Count);
+
+            var migrations = await db.DbContext.MigrationLog
+                .Where(m => m.Status == MigrationStatus.Completed
+                            && (ids.Contains(m.SourceUserId) || ids.Contains(m.TargetUserId)))
+                .ToListAsync(cancel);
+
+            // For a record that received data, the source's name; for one whose data moved away, the target's.
+            var receivedFrom = migrations
+                .GroupBy(m => m.TargetUserId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(m => m.Time).First().SourceUserName);
+            var movedTo = migrations
+                .GroupBy(m => m.SourceUserId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(m => m.Time).First().TargetUserName);
+
+            return players.Select(p => new PlayerRecordInfo(
+                MakePlayerRecord(p),
+                playTimes.GetValueOrDefault(p.UserId),
+                banCounts.GetValueOrDefault(p.UserId),
+                receivedFrom.GetValueOrDefault(p.UserId),
+                movedTo.GetValueOrDefault(p.UserId))).ToList();
+        }
+
+        #endregion
+
+        #region User Migration
+
+        public async Task<List<MigrationLog>> GetMigrationLogsAsync(int limit, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            return await db.DbContext.MigrationLog
+                .OrderByDescending(m => m.Time)
+                .Take(limit)
+                .ToListAsync(cancel);
+        }
+
+        public async Task<MigrationLog?> GetMigrationLogAsync(int id, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            return await db.DbContext.MigrationLog.SingleOrDefaultAsync(m => m.Id == id, cancel);
+        }
+
+        public async Task<int> AddMigrationLogAsync(MigrationLog log)
+        {
+            await using var db = await GetDb();
+
+            db.DbContext.MigrationLog.Add(log);
+            await db.DbContext.SaveChangesAsync();
+
+            return log.Id;
+        }
+
+        public async Task UpdateMigrationLogStatusAsync(int id, MigrationStatus status, Guid? performedBy, string? detail)
+        {
+            await using var db = await GetDb();
+
+            var log = await db.DbContext.MigrationLog.SingleOrDefaultAsync(m => m.Id == id);
+            if (log == null)
+                return;
+
+            log.Status = status;
+            if (performedBy != null)
+                log.PerformedByUserId = performedBy;
+            if (detail != null)
+                log.Detail = detail;
+
+            await db.DbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// True if a completed migration has already moved <paramref name="source"/>'s data away. Lets the
+        /// auto path skip accounts that were already migrated (avoids re-processing the same old GUID).
+        /// </summary>
+        public async Task<bool> IsCompletedMigrationSourceAsync(Guid source, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            return await db.DbContext.MigrationLog
+                .AnyAsync(m => m.SourceUserId == source && m.Status == MigrationStatus.Completed, cancel);
+        }
+
+        /// <summary>
+        /// True if any migration log entry (in any state) already links this source to this target. Used to
+        /// avoid spamming a new pending entry/alert every time a name-only match reconnects.
+        /// </summary>
+        public async Task<bool> MigrationExistsAsync(Guid source, Guid target, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            return await db.DbContext.MigrationLog
+                .AnyAsync(m => m.SourceUserId == source && m.TargetUserId == target, cancel);
+        }
+
+        /// <summary>
+        /// Re-points the selected groups of per-user data from <paramref name="source"/> onto
+        /// <paramref name="target"/> in a single transaction, using "old replaces new" semantics for
+        /// uniquely-keyed data (the target's existing rows are dropped first). Returns a human-readable
+        /// per-table summary of what moved. The source's (now-empty) Player row is intentionally kept as a
+        /// tombstone; the <c>migration_log</c> entry prevents it being processed again.
+        /// </summary>
+        public async Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+            await using var tx = await db.DbContext.Database.BeginTransactionAsync(cancel);
+            var ctx = db.DbContext;
+            var summary = new List<string>();
+
+            async Task Count(string label, Task<int> op)
+            {
+                var n = await op;
+                if (n > 0)
+                    summary.Add($"{label}: {n}");
+            }
+
+            if ((scope & MigrationScope.Gameplay) != 0)
+            {
+                // Preferences (unique per user): drop target's, then re-point source's. Profiles cascade.
+                await Count("preferences",
+                    ctx.Preference.Where(p => p.UserId == target).ExecuteDeleteAsync(cancel));
+                await Count("preferences-moved",
+                    ctx.Preference.Where(p => p.UserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.UserId, target), cancel));
+
+                // Play times (unique per user+tracker): drop target's, then re-point source's.
+                await ctx.PlayTime.Where(pt => pt.PlayerId == target).ExecuteDeleteAsync(cancel);
+                await Count("playtimes",
+                    ctx.PlayTime.Where(pt => pt.PlayerId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(pt => pt.PlayerId, target), cancel));
+
+                // History (no harmful uniqueness): merge onto target.
+                await Count("connections",
+                    ctx.ConnectionLog.Where(c => c.UserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(c => c.UserId, target), cancel));
+                await Count("uploads",
+                    ctx.UploadedResourceLog.Where(u => u.UserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(u => u.UserId, target), cancel));
+                await Count("admin-log-refs",
+                    ctx.AdminLogPlayer.Where(a => a.PlayerUserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.PlayerUserId, target), cancel));
+            }
+
+            if ((scope & MigrationScope.Whitelists) != 0)
+            {
+                await ReplacePkGuidRow(ctx, ctx.Whitelist, source, target,
+                    src => new Whitelist { UserId = target }, summary, "whitelist", cancel);
+
+                // Role/job whitelists (unique per user+role): drop target's, then re-point source's.
+                await ctx.RoleWhitelists.Where(w => w.PlayerUserId == target).ExecuteDeleteAsync(cancel);
+                await Count("role-whitelists",
+                    ctx.RoleWhitelists.Where(w => w.PlayerUserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(w => w.PlayerUserId, target), cancel));
+            }
+
+            if ((scope & MigrationScope.Bans) != 0)
+            {
+                // Bans follow the person (anti-evasion): merge, but skip any ban the target is already on.
+                var targetBanIds = await ctx.BanPlayer.Where(bp => bp.UserId == target)
+                    .Select(bp => bp.BanId).ToListAsync(cancel);
+                await ctx.BanPlayer.Where(bp => bp.UserId == source && targetBanIds.Contains(bp.BanId))
+                    .ExecuteDeleteAsync(cancel);
+                await Count("bans",
+                    ctx.BanPlayer.Where(bp => bp.UserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.UserId, target), cancel));
+
+                await ReplacePkGuidRow(ctx, ctx.Blacklist, source, target,
+                    src => new Blacklist { UserId = target }, summary, "blacklist", cancel);
+                await ReplacePkGuidRow(ctx, ctx.BanExemption, source, target,
+                    src => new ServerBanExemption { UserId = target, Flags = src.Flags }, summary, "ban-exemption", cancel);
+
+                // Admin remarks received by the player: merge onto target.
+                await Count("notes",
+                    ctx.AdminNotes.Where(n => n.PlayerUserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(n => n.PlayerUserId, target), cancel));
+                await Count("watchlists",
+                    ctx.AdminWatchlists.Where(n => n.PlayerUserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(n => n.PlayerUserId, target), cancel));
+                await Count("messages",
+                    ctx.AdminMessages.Where(n => n.PlayerUserId == source)
+                        .ExecuteUpdateAsync(s => s.SetProperty(n => n.PlayerUserId, target), cancel));
+            }
+
+            if ((scope & MigrationScope.Admin) != 0)
+            {
+                await MigrateAdminStatus(ctx, source, target, summary, cancel);
+
+                // Authorship of admin actions follows the admin's new identity.
+                await ctx.AdminNotes.Where(n => n.CreatedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.CreatedById, target), cancel);
+                await ctx.AdminNotes.Where(n => n.LastEditedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.LastEditedById, target), cancel);
+                await ctx.AdminNotes.Where(n => n.DeletedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.DeletedById, target), cancel);
+                await ctx.AdminWatchlists.Where(n => n.CreatedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.CreatedById, target), cancel);
+                await ctx.AdminWatchlists.Where(n => n.LastEditedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.LastEditedById, target), cancel);
+                await ctx.AdminMessages.Where(n => n.CreatedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.CreatedById, target), cancel);
+                await ctx.AdminMessages.Where(n => n.LastEditedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.LastEditedById, target), cancel);
+                await ctx.Ban.Where(b => b.BanningAdmin == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(b => b.BanningAdmin, target), cancel);
+                await ctx.Ban.Where(b => b.LastEditedById == source)
+                    .ExecuteUpdateAsync(s => s.SetProperty(b => b.LastEditedById, target), cancel);
+            }
+
+            // Preserve the earliest first-seen on the surviving (target) record.
+            var src = await ctx.Player.SingleOrDefaultAsync(p => p.UserId == source, cancel);
+            var tgt = await ctx.Player.SingleOrDefaultAsync(p => p.UserId == target, cancel);
+            if (src != null && tgt != null && src.FirstSeenTime < tgt.FirstSeenTime)
+            {
+                tgt.FirstSeenTime = src.FirstSeenTime;
+                await ctx.SaveChangesAsync(cancel);
+            }
+
+            await tx.CommitAsync(cancel);
+
+            return summary.Count == 0 ? "nothing to move" : string.Join(", ", summary);
+        }
+
+        /// <summary>
+        /// "Old replaces new" for a table whose primary key is the user's GUID: drop the target's row (if
+        /// any) and, when the source has a row, replace it with an equivalent row under the target GUID.
+        /// </summary>
+        private static async Task ReplacePkGuidRow<T>(
+            ServerDbContext ctx,
+            DbSet<T> set,
+            Guid source,
+            Guid target,
+            Func<T, T> clone,
+            List<string> summary,
+            string label,
+            CancellationToken cancel) where T : class
+        {
+            var srcRow = await set.SingleOrDefaultAsync(BuildUserIdPredicate<T>(source), cancel);
+            await set.Where(BuildUserIdPredicate<T>(target)).ExecuteDeleteAsync(cancel);
+            if (srcRow == null)
+                return;
+
+            set.Remove(srcRow);
+            await ctx.SaveChangesAsync(cancel);
+            set.Add(clone(srcRow));
+            await ctx.SaveChangesAsync(cancel);
+            summary.Add(label);
+        }
+
+        private static Expression<Func<T, bool>> BuildUserIdPredicate<T>(Guid userId)
+        {
+            var param = Expression.Parameter(typeof(T), "e");
+            var body = Expression.Equal(Expression.Property(param, "UserId"), Expression.Constant(userId));
+            return Expression.Lambda<Func<T, bool>>(body, param);
+        }
+
+        private static async Task MigrateAdminStatus(
+            ServerDbContext ctx,
+            Guid source,
+            Guid target,
+            List<string> summary,
+            CancellationToken cancel)
+        {
+            var srcAdmin = await ctx.Admin.Include(a => a.Flags).SingleOrDefaultAsync(a => a.UserId == source, cancel);
+            var tgtAdmin = await ctx.Admin.Include(a => a.Flags).SingleOrDefaultAsync(a => a.UserId == target, cancel);
+
+            if (tgtAdmin != null)
+                ctx.Admin.Remove(tgtAdmin);
+            if (srcAdmin != null)
+                ctx.Admin.Remove(srcAdmin);
+            await ctx.SaveChangesAsync(cancel);
+
+            if (srcAdmin == null)
+                return;
+
+            ctx.Admin.Add(new Admin
+            {
+                UserId = target,
+                Title = srcAdmin.Title,
+                AdminRankId = srcAdmin.AdminRankId,
+                Deadminned = srcAdmin.Deadminned,
+                Suspended = srcAdmin.Suspended,
+                Flags = srcAdmin.Flags.Select(f => new AdminFlag { Flag = f.Flag, Negative = f.Negative }).ToList(),
+            });
+            await ctx.SaveChangesAsync(cancel);
+            summary.Add("admin");
         }
 
         #endregion

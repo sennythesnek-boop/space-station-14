@@ -40,8 +40,10 @@ public sealed partial class TTSSystem : EntitySystem
     private readonly Queue<QueuedTts> _queue = new();
     private TimeSpan _busyUntil;
 
-    // Recently-voiced (speaker, text) -> time, to drop the radio+local duplicate of one utterance.
-    private readonly Dictionary<(NetEntity, string), TimeSpan> _recent = new();
+    // Recently-voiced text -> time, to drop the duplicate copy of one utterance. A comms message
+    // arrives as both a local Whisper (with a sender) and a Radio message (no sender), so we key on
+    // text alone — there's no shared sender to match on.
+    private readonly Dictionary<string, TimeSpan> _recent = new();
     private static readonly TimeSpan DedupeWindow = TimeSpan.FromSeconds(1);
 
     // Text of your own recent local messages -> time. Radio messages carry no sender, so this is
@@ -100,9 +102,9 @@ public sealed partial class TTSSystem : EntitySystem
         if (!ShouldVoice(msg.Channel, hasSource))
             return;
 
-        // Speaking on the radio also makes you speak locally (a whisper), so the same line arrives
-        // twice — once on Radio, once on Local/Whisper. Read it only once per speaker.
-        if (hasSource && IsDuplicate(msg.SenderEntity, text))
+        // Speaking on the radio also makes you speak locally (a whisper), so the same line reaches a
+        // nearby listener twice — once as Local/Whisper, once as Radio. Read it only once.
+        if (IsDuplicate(text))
             return;
 
         var whisper = msg.Channel == ChatChannel.Whisper;
@@ -265,20 +267,19 @@ public sealed partial class TTSSystem : EntitySystem
         return _ownRecent.TryGetValue(text, out var last) && _timing.CurTime - last < OwnEchoWindow;
     }
 
-    private bool IsDuplicate(NetEntity sender, string text)
+    private bool IsDuplicate(string text)
     {
         var now = _timing.CurTime;
-        var key = (sender, text);
 
-        if (_recent.TryGetValue(key, out var last) && now - last < DedupeWindow)
+        if (_recent.TryGetValue(text, out var last) && now - last < DedupeWindow)
             return true;
 
-        _recent[key] = now;
+        _recent[text] = now;
 
         // Opportunistically drop stale entries.
         if (_recent.Count > 64)
         {
-            var stale = new List<(NetEntity, string)>();
+            var stale = new List<string>();
             foreach (var (k, t) in _recent)
             {
                 if (now - t >= DedupeWindow)

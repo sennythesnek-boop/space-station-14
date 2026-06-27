@@ -93,11 +93,11 @@ public sealed partial class CCVars
         CVarDef.Create("tts.client_enabled", true, CVar.CLIENTONLY | CVar.ARCHIVE);
 
     /// <summary>
-    ///     When true, messages are read aloud with a neural voice. When false, they play as
-    ///     gibberish blips sized to the message length.
+    ///     When true, messages are read aloud with a neural voice (when one is available). When false,
+    ///     they play as gibberish blips sized to the message length.
     /// </summary>
     public static readonly CVarDef<bool> TtsReading =
-        CVarDef.Create("tts.reading", false, CVar.CLIENTONLY | CVar.ARCHIVE);
+        CVarDef.Create("tts.reading", true, CVar.CLIENTONLY | CVar.ARCHIVE);
 
     /// <summary>
     ///     Client-side TTS volume multiplier.

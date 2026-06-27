@@ -63,6 +63,7 @@ namespace Content.Server.Connection
         [Dependency] private IHttpClientHolder _http = default!;
         [Dependency] private IAdminManager _adminManager = default!;
         [Dependency] private IEntityManager _entityManager = default!;
+        [Dependency] private UserMigrationManager _migration = default!;
 
         private GameTicker? _ticker;
 
@@ -164,6 +165,10 @@ namespace Content.Server.Connection
                     return;
 
                 await _db.UpdatePlayerRecordAsync(userId, e.UserName, addr, hwid);
+
+                // The target Player row now exists. Re-attach any orphaned data from an older same-username
+                // account before the session finishes connecting and caches prefs/play-time in memory.
+                await _migration.TryAutoMigrateAsync(userId, e.UserName, hwid, addr);
             }
         }
 

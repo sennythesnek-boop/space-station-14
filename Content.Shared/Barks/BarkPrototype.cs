@@ -7,7 +7,7 @@ namespace Content.Shared.Barks;
 /// A "bark" voice: a collection of short sounds that are played procedurally,
 /// one per character, while an entity speaks. Ported from Goob-Station.
 /// </summary>
-[Prototype("bark")]
+[Prototype]
 public sealed partial class BarkPrototype : IPrototype
 {
     [IdDataField] public string ID { get; private set; } = default!;

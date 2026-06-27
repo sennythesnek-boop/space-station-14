@@ -51,6 +51,7 @@ namespace Content.Server.Database
         public DbSet<IPIntelCache> IPIntelCache { get; set; } = null!;
         public DbSet<CustomVoteLog> CustomVoteLog { get; set; } = null!;
         public DbSet<CustomVoteLogOption> CustomVoteLogOption { get; set; } = null!;
+        public DbSet<MigrationLog> MigrationLog { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -297,6 +298,15 @@ namespace Content.Server.Database
                 .Property(p => p.Type)
                 .HasDefaultValue(HwidType.Legacy);
 
+            modelBuilder.Entity<MigrationLog>()
+                .HasIndex(m => m.SourceUserId);
+
+            modelBuilder.Entity<MigrationLog>()
+                .HasIndex(m => m.TargetUserId);
+
+            modelBuilder.Entity<MigrationLog>()
+                .HasIndex(m => m.Time);
+
             ModelBan.OnModelCreating(modelBuilder);
             ModelCustomVoteLog.OnModelCreating(modelBuilder);
         }
@@ -485,6 +495,47 @@ namespace Content.Server.Database
         public string UserName { get; set; } = null!;
 
         public Guid UserId { get; set; }
+    }
+
+    /// <summary>
+    /// Audit record of a per-user data migration: re-pointing all of one GUID's data onto another.
+    /// Covers automatic same-username migrations (from <c>ConnectionManager</c>), pending entries
+    /// awaiting admin review, and manual admin transfers. Powers the <c>migrations</c> admin tool.
+    /// </summary>
+    [Table("migration_log")]
+    public class MigrationLog
+    {
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        /// <summary>The old GUID whose data is moved away (and whose Player row is removed on completion).</summary>
+        public Guid SourceUserId { get; set; }
+
+        /// <summary>The new GUID that receives the data and survives as the identity.</summary>
+        public Guid TargetUserId { get; set; }
+
+        /// <summary>Username snapshots at the time of the migration, for display without extra lookups.</summary>
+        public string SourceUserName { get; set; } = null!;
+        public string TargetUserName { get; set; } = null!;
+
+        public DateTime Time { get; set; }
+
+        /// <summary>True if this migration was initiated automatically by the connection path.</summary>
+        public bool Automatic { get; set; }
+
+        public MigrationStatus Status { get; set; }
+
+        /// <summary>Which data groups were (or would be) moved. Stored as the <see cref="MigrationScope"/> flags.</summary>
+        public MigrationScope Scope { get; set; }
+
+        /// <summary>Why the source/target were considered the same person: "hwid", "ip" or "name-only".</summary>
+        public string MatchReason { get; set; } = null!;
+
+        /// <summary>The admin who performed/approved/rejected this, or null for an unreviewed automatic entry.</summary>
+        public Guid? PerformedByUserId { get; set; }
+
+        /// <summary>Human-readable summary of what was moved (per-table counts), filled on completion.</summary>
+        public string? Detail { get; set; }
     }
 
     [Table("player")]

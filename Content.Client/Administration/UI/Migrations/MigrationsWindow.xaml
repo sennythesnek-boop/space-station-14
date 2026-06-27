@@ -1,0 +1,35 @@
+<ui:FancyWindow xmlns="https://spacestation14.io"
+                xmlns:ui="clr-namespace:Content.Client.UserInterface.Controls"
+                Title="{Loc migrations-title}"
+                Resizable="True"
+                MinSize="560 420"
+                SetSize="900 660">
+    <PanelContainer StyleClasses="BackgroundDark">
+        <BoxContainer Orientation="Vertical" Margin="6">
+            <Label Text="{Loc migrations-manual-header}" StyleClasses="LabelHeading" />
+            <Label Text="{Loc migrations-manual-explainer}" StyleClasses="LabelSubText" />
+            <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                <Label Text="{Loc migrations-source}" VerticalAlignment="Center" />
+                <LineEdit Name="SourceEdit" HorizontalExpand="True" MinWidth="180" Margin="4 0 0 0"
+                          PlaceHolder="{Loc migrations-player-placeholder}" />
+                <Label Text="{Loc migrations-target}" VerticalAlignment="Center" Margin="8 0 0 0" />
+                <LineEdit Name="TargetEdit" HorizontalExpand="True" MinWidth="180" Margin="4 0 0 0"
+                          PlaceHolder="{Loc migrations-player-placeholder}" />
+            </BoxContainer>
+            <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                <CheckBox Name="ScopeGameplay" Text="{Loc migrations-scope-gameplay}" Pressed="True" />
+                <CheckBox Name="ScopeWhitelists" Text="{Loc migrations-scope-whitelists}" Pressed="True" Margin="8 0 0 0" />
+                <CheckBox Name="ScopeBans" Text="{Loc migrations-scope-bans}" Pressed="True" Margin="8 0 0 0" />
+                <CheckBox Name="ScopeAdmin" Text="{Loc migrations-scope-admin}" Margin="8 0 0 0" />
+                <Control HorizontalExpand="True" />
+                <Button Name="TransferButton" Text="{Loc migrations-transfer}" StyleClasses="Caution" />
+            </BoxContainer>
+            <Label Name="ResultLabel" Margin="0 4 0 0" />
+
+            <Label Text="{Loc migrations-history-header}" StyleClasses="LabelHeading" Margin="0 8 0 2" />
+            <ScrollContainer VerticalExpand="True" HorizontalExpand="True" HScrollEnabled="False">
+                <BoxContainer Name="RowsContainer" Orientation="Vertical" VerticalExpand="True" />
+            </ScrollContainer>
+        </BoxContainer>
+    </PanelContainer>
+</ui:FancyWindow>

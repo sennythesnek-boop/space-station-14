@@ -119,6 +119,18 @@ public sealed record PlayerRecord(
     IPAddress? LastSeenAddress,
     ImmutableTypedHwid? HWId);
 
+/// <summary>
+/// A <see cref="PlayerRecord"/> enriched with the aggregate info shown by the <c>playerrecords</c> admin
+/// tool: overall play time, how many bans the user is on, and whether this GUID has been involved in a
+/// completed data migration (as the retired source or the surviving target).
+/// </summary>
+public sealed record PlayerRecordInfo(
+    PlayerRecord Record,
+    TimeSpan OverallPlaytime,
+    int BanCount,
+    string? MigratedFrom,
+    string? MigratedTo);
+
 public sealed record RoundRecord(int Id, DateTimeOffset? StartDate, ServerRecord Server);
 
 public sealed record ServerRecord(int Id, string Name);
