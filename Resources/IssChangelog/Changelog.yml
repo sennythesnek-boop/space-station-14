@@ -1,8 +1,21 @@
 Name: Changelog
 Order: 0
 Entries:
-# Unreleased — not part of a tagged release yet, so no version.
 - author: issyman182
+  version: iss14:1.6.0
+  time: '2026-06-28'
+  changes:
+  - message: Text-To-Speech! Characters can now speak out loud — either Sims-style gibberish blips or real neural voices (when the server has a voice backend set up). Pick your character's gibberish voice in the character editor and tune everything in Options -> Audio.
+    type: Add
+  - message: New trait — Deaf. You hear no local speech, whispers or radio (including your own voice).
+    type: Add
+  - message: New trait — Hard of Hearing. Nearby speech is clear, mid-range speech is garbled, and far-away speech is silent.
+    type: Add
+  - message: Fixed disposals breaking when used normally.
+    type: Fix
+  id: 9
+- author: issyman182
+  version: iss14:1.5.0
   time: '2026-06-24'
   changes:
   - message: Sprint! Press or hold Space to sprint, drawing from your stamina pool (ported from Goobstation).
