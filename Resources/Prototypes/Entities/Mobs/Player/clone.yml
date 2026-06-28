@@ -23,6 +23,8 @@
   # traits
   - BlackAndWhiteOverlay
   - Clumsy
+  - Deaf
+  - HardOfHearing
   - ImpairedMobility
   # - LegsParalyzed (you get healed)
   - LightweightDrunk

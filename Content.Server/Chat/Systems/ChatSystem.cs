@@ -13,6 +13,7 @@ using Content.Shared.Examine;
 using Content.Shared.Ghost;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Players.RateLimiting;
+using Content.Shared.Traits.Assorted;
 using Robust.Server.Player;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Configuration;
@@ -47,6 +48,8 @@ public sealed partial class ChatSystem : SharedChatSystem
     [Dependency] private ReplacementAccentSystem _wordreplacement = default!;
     [Dependency] private ExamineSystemShared _examineSystem = default!;
     [Dependency] private EntityQuery<GhostHearingComponent> _ghostHearingQuery = default!;
+    [Dependency] private EntityQuery<DeafComponent> _deafQuery = default!;
+    [Dependency] private EntityQuery<HardOfHearingComponent> _hardOfHearingQuery = default!;
 
     private bool _loocEnabled = true;
     private bool _deadLoocEnabled;

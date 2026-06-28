@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text;
 using Content.Server.Speech.Prototypes;
@@ -61,10 +62,58 @@ public sealed partial class ChatSystem
         return initialResult;
     }
 
+    private enum SpeechHearing : byte
+    {
+        /// <summary>The listener hears the message clearly.</summary>
+        Clear,
+        /// <summary>The listener only catches a garbled version of the message.</summary>
+        Muffled,
+        /// <summary>The listener cannot hear the message at all.</summary>
+        None,
+    }
+
+    /// <summary>
+    ///     Determines how a listener perceives a spoken message based on their distance and any hearing-impairment traits.
+    /// </summary>
+    /// <param name="baseClearRange">
+    ///     How close a normal (unimpaired) listener has to be to hear the message clearly.
+    ///     Use <see cref="VoiceRange"/> for normal speech (everyone in range hears it) and <see cref="WhisperClearRange"/> for whispers.
+    /// </param>
+    private SpeechHearing GetSpeechHearing(EntityUid listener, float distance, bool observer, float baseClearRange)
+    {
+        // Ghosts and other observers always hear everything.
+        if (observer)
+            return SpeechHearing.Clear;
+
+        // Fully deaf entities never hear local speech, including their own.
+        if (_deafQuery.HasComponent(listener))
+            return SpeechHearing.None;
+
+        if (_hardOfHearingQuery.TryGetComponent(listener, out var hardOfHearing))
+        {
+            var clearRange = MathF.Min(baseClearRange, hardOfHearing.ClearRange);
+            if (distance <= clearRange)
+                return SpeechHearing.Clear;
+
+            return distance <= hardOfHearing.MuffledRange ? SpeechHearing.Muffled : SpeechHearing.None;
+        }
+
+        return distance <= baseClearRange ? SpeechHearing.Clear : SpeechHearing.Muffled;
+    }
+
+    /// <summary>
+    ///     Everything needed to rebuild a garbled variant of a spoken message for a hard-of-hearing listener.
+    /// </summary>
+    private readonly record struct SpeechObfuscationData(string Message, string WrapId, string Name, string Verb, string FontId, int FontSize);
+
     /// <summary>
     ///     Sends a chat message to the given players in range of the source entity.
     /// </summary>
-    private void SendInVoiceRange(ChatChannel channel, string message, string wrappedMessage, EntityUid source, ChatTransmitRange range, NetUserId? author = null)
+    /// <param name="obfuscation">
+    ///     When set (only for the <see cref="ChatChannel.Local"/> say channel), hard-of-hearing listeners past their clear
+    ///     range receive a garbled, freshly-rebuilt version of the message instead of the original.
+    /// </param>
+    private void SendInVoiceRange(ChatChannel channel, string message, string wrappedMessage, EntityUid source, ChatTransmitRange range, NetUserId? author = null, SpeechObfuscationData? obfuscation = null)
     {
         foreach (var (session, data) in GetRecipients(source, VoiceRange))
         {
@@ -72,6 +121,27 @@ public sealed partial class ChatSystem
             if (entRange == MessageRangeCheckResult.Disallowed)
                 continue;
             var entHideChat = entRange == MessageRangeCheckResult.HideChat;
+
+            // Hearing impairment only affects spoken words, not emotes (seen) or LOOC (out-of-character).
+            if (channel == ChatChannel.Local && session.AttachedEntity is { Valid: true } listener)
+            {
+                switch (GetSpeechHearing(listener, data.Range, data.Observer, VoiceRange))
+                {
+                    case SpeechHearing.None:
+                        continue;
+                    case SpeechHearing.Muffled when obfuscation is { } obf && _hardOfHearingQuery.TryGetComponent(listener, out var hoh):
+                        var garbled = ObfuscateMessageReadability(obf.Message, hoh.Clarity);
+                        var garbledWrap = Loc.GetString(obf.WrapId,
+                            ("entityName", obf.Name),
+                            ("verb", obf.Verb),
+                            ("fontType", obf.FontId),
+                            ("fontSize", obf.FontSize),
+                            ("message", FormattedMessage.EscapeText(garbled)));
+                        _chatManager.ChatMessageToOne(channel, garbled, garbledWrap, source, entHideChat, session.Channel, author: author);
+                        continue;
+                }
+            }
+
             _chatManager.ChatMessageToOne(channel, message, wrappedMessage, source, entHideChat, session.Channel, author: author);
         }
 

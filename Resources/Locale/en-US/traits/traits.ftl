@@ -65,3 +65,9 @@ trait-hemophilia-desc = Your body fails to make blood clots.
 
 trait-impaired-mobility-name = Impaired Mobility
 trait-impaired-mobility-desc = You have difficulty moving without a mobility aid.
+
+trait-deaf-name = Deaf
+trait-deaf-desc = You are completely deaf. You can't hear any speech or radio chatter, not even your own voice.
+
+trait-hard-of-hearing-name = Hard of Hearing
+trait-hard-of-hearing-desc = Your hearing is failing. You only make out speech clearly when the speaker is right next to you - anyone further away just sounds like garbled mumbling. Radio earpieces still come through fine.

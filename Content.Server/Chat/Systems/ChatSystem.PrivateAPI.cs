@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Content.Shared.Chat;
 using Content.Shared.Database;
@@ -49,14 +50,20 @@ public sealed partial class ChatSystem
 
         name = FormattedMessage.EscapeText(name);
 
-        var wrappedMessage = Loc.GetString(speech.Bold ? "chat-manager-entity-say-bold-wrap-message" : "chat-manager-entity-say-wrap-message",
+        var verb = Loc.GetString(_random.Pick(speech.SpeechVerbStrings));
+        var wrapId = speech.Bold ? "chat-manager-entity-say-bold-wrap-message" : "chat-manager-entity-say-wrap-message";
+
+        var wrappedMessage = Loc.GetString(wrapId,
             ("entityName", name),
-            ("verb", Loc.GetString(_random.Pick(speech.SpeechVerbStrings))),
+            ("verb", verb),
             ("fontType", speech.FontId),
             ("fontSize", speech.FontSize),
             ("message", FormattedMessage.EscapeText(message)));
 
-        SendInVoiceRange(ChatChannel.Local, message, wrappedMessage, source, range);
+        // Pass the raw pieces so hard-of-hearing listeners past their clear range can be given a garbled variant.
+        var obfuscation = new SpeechObfuscationData(message, wrapId, name, verb, speech.FontId, speech.FontSize);
+
+        SendInVoiceRange(ChatChannel.Local, message, wrappedMessage, source, range, obfuscation: obfuscation);
 
         var ev = new EntitySpokeEvent(source, message, null, null);
         RaiseLocalEvent(source, ev, true);
@@ -140,7 +147,22 @@ public sealed partial class ChatSystem
             if (MessageRangeCheck(session, data, range) != MessageRangeCheckResult.Full)
                 continue; // Won't get logged to chat, and ghosts are too far away to see the pop-up, so we just won't send it to them.
 
-            if (data.Range <= WhisperClearRange || data.Observer)
+            // Hearing impairment: the deaf hear nothing, the hard-of-hearing have a smaller clear range and can miss a whisper entirely.
+            float whisperClearRange = WhisperClearRange;
+            if (!data.Observer)
+            {
+                if (_deafQuery.HasComponent(listener))
+                    continue;
+
+                if (_hardOfHearingQuery.TryGetComponent(listener, out var hardOfHearing))
+                {
+                    if (data.Range > hardOfHearing.MuffledRange)
+                        continue;
+                    whisperClearRange = MathF.Min(whisperClearRange, hardOfHearing.ClearRange);
+                }
+            }
+
+            if (data.Range <= whisperClearRange || data.Observer)
                 _chatManager.ChatMessageToOne(ChatChannel.Whisper, message, wrappedMessage, source, false, session.Channel);
             //If listener is too far, they only hear fragments of the message
             else if (_examineSystem.InRangeUnOccluded(source, listener, WhisperMuffledRange))
