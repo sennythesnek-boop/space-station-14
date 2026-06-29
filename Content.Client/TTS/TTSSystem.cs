@@ -58,8 +58,22 @@ public sealed partial class TTSSystem : EntitySystem
         SubscribeNetworkEvent<PlayTtsEvent>(OnPlayTts);
         SubscribeNetworkEvent<TtsFallbackEvent>(OnTtsFallback);
 
+        // Keep the server informed of our prefs so it can suppress overlapping built-in SFX.
+        Subs.CVar(_cfg, CCVars.TtsClientEnabled, _ => SendSuppressionState());
+        Subs.CVar(_cfg, CCVars.TtsReading, _ => SendSuppressionState());
+        Subs.CVar(_cfg, CCVars.TtsReadAnnouncements, _ => SendSuppressionState());
+        SendSuppressionState();
+
         _chat = _ui.GetUIController<ChatUIController>();
         _chat.MessageAdded += OnChatMessage;
+    }
+
+    private void SendSuppressionState()
+    {
+        RaiseNetworkEvent(new TtsSuppressionStateEvent(
+            _cfg.GetCVar(CCVars.TtsClientEnabled),
+            _cfg.GetCVar(CCVars.TtsReading),
+            _cfg.GetCVar(CCVars.TtsReadAnnouncements)));
     }
 
     public override void Shutdown()

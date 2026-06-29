@@ -15,7 +15,7 @@ public sealed class MigrationsEui : BaseEui
         _window = new MigrationsWindow();
         _window.OnApprove += id => SendMessage(new MigrationApproveMessage(id));
         _window.OnReject += id => SendMessage(new MigrationRejectMessage(id));
-        _window.OnManual += (source, target, scope) => SendMessage(new MigrationManualMessage(source, target, scope));
+        _window.OnManual += (source, target, scope, merge) => SendMessage(new MigrationManualMessage(source, target, scope, merge));
         _window.OnClose += () => SendMessage(new CloseEuiMessage());
     }
 

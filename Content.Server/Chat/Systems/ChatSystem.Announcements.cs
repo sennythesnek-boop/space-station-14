@@ -1,3 +1,4 @@
+using Content.Server.TTS;
 using Content.Shared.Chat;
 using Content.Shared.Database;
 using Content.Shared.Station.Components;
@@ -9,6 +10,7 @@ namespace Content.Server.Chat.Systems;
 
 public sealed partial class ChatSystem
 {
+    [Dependency] private TTSSystem _tts = default!;
     /// <inheritdoc />
     public override void DispatchGlobalAnnouncement(
         string message,
@@ -24,7 +26,9 @@ public sealed partial class ChatSystem
         _chatManager.ChatMessageToAll(ChatChannel.Radio, message, wrappedMessage, default, false, true, colorOverride);
         if (playSound)
         {
-            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, Filter.Broadcast(), true, AudioParams.Default.WithVolume(-2f));
+            // Don't play the chime for clients whose TTS will read the announcement aloud.
+            var soundFilter = Filter.Broadcast().RemoveWhere(_tts.SuppressesAnnouncements);
+            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, soundFilter, true, AudioParams.Default.WithVolume(-2f));
         }
         _adminLogger.Add(LogType.Chat, LogImpact.Low, $"Global station announcement from {sender}: {message}");
     }
@@ -45,7 +49,8 @@ public sealed partial class ChatSystem
         _chatManager.ChatMessageToManyFiltered(filter, ChatChannel.Radio, message, wrappedMessage, source ?? default, false, true, colorOverride);
         if (playSound)
         {
-            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, filter, true, AudioParams.Default.WithVolume(-2f));
+            var soundFilter = filter.Clone().RemoveWhere(_tts.SuppressesAnnouncements);
+            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, soundFilter, true, AudioParams.Default.WithVolume(-2f));
         }
         _adminLogger.Add(LogType.Chat, LogImpact.Low, $"Station Announcement from {sender}: {message}");
     }
@@ -78,7 +83,8 @@ public sealed partial class ChatSystem
 
         if (playDefaultSound)
         {
-            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, filter, true, AudioParams.Default.WithVolume(-2f));
+            var soundFilter = filter.Clone().RemoveWhere(_tts.SuppressesAnnouncements);
+            _audio.PlayGlobal(announcementSound ?? DefaultAnnouncementSound, soundFilter, true, AudioParams.Default.WithVolume(-2f));
         }
 
         _adminLogger.Add(LogType.Chat, LogImpact.Low, $"Station Announcement on {station} from {sender}: {message}");

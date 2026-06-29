@@ -1,9 +1,9 @@
-using Content.Shared.CCVar;
+using Content.Server.TTS;
 using Content.Shared.Chat;
 using Content.Shared.Speech;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
-using Robust.Shared.Configuration;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -16,7 +16,7 @@ namespace Content.Server.Speech
         [Dependency] private IPrototypeManager _protoManager = default!;
         [Dependency] private IRobustRandom _random = default!;
         [Dependency] private SharedAudioSystem _audio = default!;
-        [Dependency] private IConfigurationManager _cfg = default!;
+        [Dependency] private TTSSystem _tts = default!;
 
         public override void Initialize()
         {
@@ -64,10 +64,6 @@ namespace Content.Server.Speech
             if (component.SpeechSounds == null)
                 return;
 
-            // When TTS is active it replaces the vanilla per-message speech blip, so don't double up.
-            if (_cfg.GetCVar(CCVars.TtsEnabled))
-                return;
-
             var currentTime = _gameTiming.CurTime;
             var cooldown = TimeSpan.FromSeconds(component.SoundCooldownTime);
 
@@ -77,7 +73,11 @@ namespace Content.Server.Speech
 
             var sound = GetSpeechSound((uid, component), args.Message);
             component.LastTimeSoundPlayed = currentTime;
-            _audio.PlayPvs(sound, uid);
+
+            // Suppress the blip only for listeners whose TTS will voice this message (gibberish or
+            // neural); clients with TTS off still hear the vanilla speech sound.
+            var filter = Filter.Pvs(uid).RemoveWhere(_tts.SuppressesSpeech);
+            _audio.PlayEntity(sound, filter, uid, true);
         }
     }
 }

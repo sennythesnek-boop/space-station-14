@@ -21,6 +21,10 @@
                 <CheckBox Name="ScopeWhitelists" Text="{Loc migrations-scope-whitelists}" Pressed="True" Margin="8 0 0 0" />
                 <CheckBox Name="ScopeBans" Text="{Loc migrations-scope-bans}" Pressed="True" Margin="8 0 0 0" />
                 <CheckBox Name="ScopeAdmin" Text="{Loc migrations-scope-admin}" Margin="8 0 0 0" />
+            </BoxContainer>
+            <BoxContainer Orientation="Horizontal" Margin="0 4 0 0">
+                <CheckBox Name="MergeCheckBox" Text="{Loc migrations-merge}" Pressed="True"
+                          ToolTip="{Loc migrations-merge-tooltip}" />
                 <Control HorizontalExpand="True" />
                 <Button Name="TransferButton" Text="{Loc migrations-transfer}" StyleClasses="Caution" />
             </BoxContainer>

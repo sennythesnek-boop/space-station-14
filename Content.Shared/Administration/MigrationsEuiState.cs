@@ -70,9 +70,12 @@ public sealed class MigrationRejectMessage(int id) : EuiMessageBase
 /// server-side; scope is the combined <see cref="MigrationScope"/> flags as an int.
 /// </summary>
 [Serializable, NetSerializable]
-public sealed class MigrationManualMessage(string source, string target, int scope) : EuiMessageBase
+public sealed class MigrationManualMessage(string source, string target, int scope, bool merge) : EuiMessageBase
 {
     public readonly string Source = source;
     public readonly string Target = target;
     public readonly int Scope = scope;
+
+    /// <summary>True to combine both accounts' data; false to replace the target's with the source's.</summary>
+    public readonly bool Merge = merge;
 }

@@ -17,14 +17,15 @@ public sealed partial class MigrationsWindow : FancyWindow
     public event Action<int>? OnApprove;
     public event Action<int>? OnReject;
 
-    /// <summary>Raised on a manual transfer request: (source, target, scope flags).</summary>
-    public event Action<string, string, int>? OnManual;
+    /// <summary>Raised on a manual transfer request: (source, target, scope flags, merge).</summary>
+    public event Action<string, string, int, bool>? OnManual;
 
     public MigrationsWindow()
     {
         RobustXamlLoader.Load(this);
 
-        TransferButton.OnPressed += _ => OnManual?.Invoke(SourceEdit.Text, TargetEdit.Text, GatherScope());
+        TransferButton.OnPressed += _ =>
+            OnManual?.Invoke(SourceEdit.Text, TargetEdit.Text, GatherScope(), MergeCheckBox.Pressed);
     }
 
     private int GatherScope()

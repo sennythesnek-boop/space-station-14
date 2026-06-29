@@ -62,12 +62,55 @@ public sealed partial class TTSSystem : EntitySystem
     // Backend health; only logged on transition. Starts true so the first failure is reported.
     private bool _backendOnline = true;
 
+    // Per-client TTS prefs, used to suppress built-in SFX the client's TTS would overlap.
+    private readonly Dictionary<ICommonSession, ClientTtsState> _clientState = new();
+
     public override void Initialize()
     {
         base.Initialize();
         SubscribeNetworkEvent<RequestTtsEvent>(OnRequestTts);
+        SubscribeNetworkEvent<TtsSuppressionStateEvent>(OnClientState);
         Subs.CVar(_cfg, CCVars.TtsVoiceGenders, OnGenderMapChanged, true);
     }
+
+    #region Built-in sound suppression
+
+    private void OnClientState(TtsSuppressionStateEvent ev, EntitySessionEventArgs args)
+    {
+        _clientState[args.SenderSession] = new ClientTtsState(ev.Enabled, ev.Reading, ev.ReadAnnouncements);
+
+        // Opportunistically drop entries for clients that have disconnected.
+        if (_clientState.Count > 256)
+        {
+            foreach (var session in _clientState.Keys.ToList())
+            {
+                if (session.Status == SessionStatus.Disconnected)
+                    _clientState.Remove(session);
+            }
+        }
+    }
+
+    /// <summary>
+    /// True if this client's TTS will read announcements aloud (neural), so the announcement chime
+    /// should be suppressed for them to avoid overlapping the spoken text.
+    /// </summary>
+    public bool SuppressesAnnouncements(ICommonSession session)
+        => _cfg.GetCVar(CCVars.TtsEnabled)
+           && _clientState.TryGetValue(session, out var s)
+           && s.Enabled && s.Reading && s.ReadAnnouncements;
+
+    /// <summary>
+    /// True if this client's TTS will voice speech (gibberish or neural), so the vanilla per-message
+    /// speech blip should be suppressed for them. Turning TTS off restores the blip.
+    /// </summary>
+    public bool SuppressesSpeech(ICommonSession session)
+        => _cfg.GetCVar(CCVars.TtsEnabled)
+           && _clientState.TryGetValue(session, out var s)
+           && s.Enabled;
+
+    private readonly record struct ClientTtsState(bool Enabled, bool Reading, bool ReadAnnouncements);
+
+    #endregion
 
     public override void Shutdown()
     {

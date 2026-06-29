@@ -188,8 +188,10 @@ namespace Content.Server.Database
         /// <summary>
         /// Re-point the selected groups of per-user data from <paramref name="source"/> to
         /// <paramref name="target"/> in one transaction. Returns a per-table summary of what moved.
+        /// When <paramref name="merge"/> is true, both accounts' characters/play times/whitelists are
+        /// combined; otherwise the target's existing data is replaced.
         /// </summary>
-        Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel = default);
+        Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, bool merge, CancellationToken cancel = default);
         #endregion
 
         #region Connection Logs
@@ -708,10 +710,10 @@ namespace Content.Server.Database
             return RunDbCommand(() => _db.MigrationExistsAsync(source, target, cancel));
         }
 
-        public Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel = default)
+        public Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, bool merge, CancellationToken cancel = default)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.MigrateUserDataAsync(source, target, scope, cancel));
+            return RunDbCommand(() => _db.MigrateUserDataAsync(source, target, scope, merge, cancel));
         }
 
         public Task<int> AddConnectionLogAsync(

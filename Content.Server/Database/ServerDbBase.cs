@@ -751,12 +751,17 @@ namespace Content.Server.Database
 
         /// <summary>
         /// Re-points the selected groups of per-user data from <paramref name="source"/> onto
-        /// <paramref name="target"/> in a single transaction, using "old replaces new" semantics for
-        /// uniquely-keyed data (the target's existing rows are dropped first). Returns a human-readable
-        /// per-table summary of what moved. The source's (now-empty) Player row is intentionally kept as a
-        /// tombstone; the <c>migration_log</c> entry prevents it being processed again.
+        /// <paramref name="target"/> in a single transaction. Returns a human-readable per-table summary.
+        /// The source's (now-empty) Player row is intentionally kept as a tombstone; the
+        /// <c>migration_log</c> entry prevents it being processed again.
         /// </summary>
-        public async Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, CancellationToken cancel)
+        /// <param name="merge">
+        /// When true, the target's existing uniquely-keyed data is kept and the source's is combined in
+        /// (characters from both accounts, play times summed per tracker, whitelists unioned). When false
+        /// ("old replaces new"), the target's existing rows for those groups are dropped first. History-type
+        /// data (bans, notes, connection logs) is always merged regardless of this flag.
+        /// </param>
+        public async Task<string> MigrateUserDataAsync(Guid source, Guid target, MigrationScope scope, bool merge, CancellationToken cancel)
         {
             await using var db = await GetDb(cancel);
             await using var tx = await db.DbContext.Database.BeginTransactionAsync(cancel);
@@ -772,20 +777,29 @@ namespace Content.Server.Database
 
             if ((scope & MigrationScope.Gameplay) != 0)
             {
-                // Preferences (unique per user): drop target's, then re-point source's. Profiles cascade.
-                await Count("preferences",
-                    ctx.Preference.Where(p => p.UserId == target).ExecuteDeleteAsync(cancel));
-                await Count("preferences-moved",
-                    ctx.Preference.Where(p => p.UserId == source)
-                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.UserId, target), cancel));
+                if (merge)
+                {
+                    // Keep both accounts' characters and sum play times per tracker.
+                    await MergePreferences(ctx, source, target, summary, cancel);
+                    await MergePlayTimes(ctx, source, target, summary, cancel);
+                }
+                else
+                {
+                    // Preferences (unique per user): drop target's, then re-point source's. Profiles cascade.
+                    await Count("preferences",
+                        ctx.Preference.Where(p => p.UserId == target).ExecuteDeleteAsync(cancel));
+                    await Count("preferences-moved",
+                        ctx.Preference.Where(p => p.UserId == source)
+                            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UserId, target), cancel));
 
-                // Play times (unique per user+tracker): drop target's, then re-point source's.
-                await ctx.PlayTime.Where(pt => pt.PlayerId == target).ExecuteDeleteAsync(cancel);
-                await Count("playtimes",
-                    ctx.PlayTime.Where(pt => pt.PlayerId == source)
-                        .ExecuteUpdateAsync(s => s.SetProperty(pt => pt.PlayerId, target), cancel));
+                    // Play times (unique per user+tracker): drop target's, then re-point source's.
+                    await ctx.PlayTime.Where(pt => pt.PlayerId == target).ExecuteDeleteAsync(cancel);
+                    await Count("playtimes",
+                        ctx.PlayTime.Where(pt => pt.PlayerId == source)
+                            .ExecuteUpdateAsync(s => s.SetProperty(pt => pt.PlayerId, target), cancel));
+                }
 
-                // History (no harmful uniqueness): merge onto target.
+                // History (no harmful uniqueness): always merged onto target.
                 await Count("connections",
                     ctx.ConnectionLog.Where(c => c.UserId == source)
                         .ExecuteUpdateAsync(s => s.SetProperty(c => c.UserId, target), cancel));
@@ -799,19 +813,28 @@ namespace Content.Server.Database
 
             if ((scope & MigrationScope.Whitelists) != 0)
             {
-                await ReplacePkGuidRow(ctx, ctx.Whitelist, source, target,
-                    src => new Whitelist { UserId = target }, summary, "whitelist", cancel);
+                if (merge)
+                {
+                    await MergePkGuidFlag(ctx, ctx.Whitelist, source, target,
+                        () => new Whitelist { UserId = target }, summary, "whitelist", cancel);
+                    await MergeRoleWhitelists(ctx, source, target, summary, cancel);
+                }
+                else
+                {
+                    await ReplacePkGuidRow(ctx, ctx.Whitelist, source, target,
+                        src => new Whitelist { UserId = target }, summary, "whitelist", cancel);
 
-                // Role/job whitelists (unique per user+role): drop target's, then re-point source's.
-                await ctx.RoleWhitelists.Where(w => w.PlayerUserId == target).ExecuteDeleteAsync(cancel);
-                await Count("role-whitelists",
-                    ctx.RoleWhitelists.Where(w => w.PlayerUserId == source)
-                        .ExecuteUpdateAsync(s => s.SetProperty(w => w.PlayerUserId, target), cancel));
+                    // Role/job whitelists (unique per user+role): drop target's, then re-point source's.
+                    await ctx.RoleWhitelists.Where(w => w.PlayerUserId == target).ExecuteDeleteAsync(cancel);
+                    await Count("role-whitelists",
+                        ctx.RoleWhitelists.Where(w => w.PlayerUserId == source)
+                            .ExecuteUpdateAsync(s => s.SetProperty(w => w.PlayerUserId, target), cancel));
+                }
             }
 
             if ((scope & MigrationScope.Bans) != 0)
             {
-                // Bans follow the person (anti-evasion): merge, but skip any ban the target is already on.
+                // Bans follow the person (anti-evasion): always merged, skipping any ban the target is on.
                 var targetBanIds = await ctx.BanPlayer.Where(bp => bp.UserId == target)
                     .Select(bp => bp.BanId).ToListAsync(cancel);
                 await ctx.BanPlayer.Where(bp => bp.UserId == source && targetBanIds.Contains(bp.BanId))
@@ -820,10 +843,19 @@ namespace Content.Server.Database
                     ctx.BanPlayer.Where(bp => bp.UserId == source)
                         .ExecuteUpdateAsync(s => s.SetProperty(bp => bp.UserId, target), cancel));
 
-                await ReplacePkGuidRow(ctx, ctx.Blacklist, source, target,
-                    src => new Blacklist { UserId = target }, summary, "blacklist", cancel);
-                await ReplacePkGuidRow(ctx, ctx.BanExemption, source, target,
-                    src => new ServerBanExemption { UserId = target, Flags = src.Flags }, summary, "ban-exemption", cancel);
+                if (merge)
+                {
+                    await MergePkGuidFlag(ctx, ctx.Blacklist, source, target,
+                        () => new Blacklist { UserId = target }, summary, "blacklist", cancel);
+                    await MergeBanExemption(ctx, source, target, summary, cancel);
+                }
+                else
+                {
+                    await ReplacePkGuidRow(ctx, ctx.Blacklist, source, target,
+                        src => new Blacklist { UserId = target }, summary, "blacklist", cancel);
+                    await ReplacePkGuidRow(ctx, ctx.BanExemption, source, target,
+                        src => new ServerBanExemption { UserId = target, Flags = src.Flags }, summary, "ban-exemption", cancel);
+                }
 
                 // Admin remarks received by the player: merge onto target.
                 await Count("notes",
@@ -839,7 +871,7 @@ namespace Content.Server.Database
 
             if ((scope & MigrationScope.Admin) != 0)
             {
-                await MigrateAdminStatus(ctx, source, target, summary, cancel);
+                await MigrateAdminStatus(ctx, source, target, merge, summary, cancel);
 
                 // Authorship of admin actions follows the admin's new identity.
                 await ctx.AdminNotes.Where(n => n.CreatedById == source)
@@ -873,7 +905,8 @@ namespace Content.Server.Database
 
             await tx.CommitAsync(cancel);
 
-            return summary.Count == 0 ? "nothing to move" : string.Join(", ", summary);
+            var mode = merge ? "merge" : "replace";
+            return summary.Count == 0 ? $"{mode}: nothing to move" : $"{mode}: {string.Join(", ", summary)}";
         }
 
         /// <summary>
@@ -913,11 +946,25 @@ namespace Content.Server.Database
             ServerDbContext ctx,
             Guid source,
             Guid target,
+            bool merge,
             List<string> summary,
             CancellationToken cancel)
         {
             var srcAdmin = await ctx.Admin.Include(a => a.Flags).SingleOrDefaultAsync(a => a.UserId == source, cancel);
             var tgtAdmin = await ctx.Admin.Include(a => a.Flags).SingleOrDefaultAsync(a => a.UserId == target, cancel);
+
+            // Admin status can't meaningfully be combined (one rank per account). In merge mode, keep the
+            // target's existing admin if it has one and just drop the source's; otherwise adopt the source's.
+            if (merge && tgtAdmin != null)
+            {
+                if (srcAdmin != null)
+                {
+                    ctx.Admin.Remove(srcAdmin);
+                    await ctx.SaveChangesAsync(cancel);
+                }
+                summary.Add("admin-kept-target");
+                return;
+            }
 
             if (tgtAdmin != null)
                 ctx.Admin.Remove(tgtAdmin);
@@ -939,6 +986,158 @@ namespace Content.Server.Database
             });
             await ctx.SaveChangesAsync(cancel);
             summary.Add("admin");
+        }
+
+        /// <summary>
+        /// Merge characters: keep the target's preferences and append every source character after the
+        /// target's existing slots, so both accounts' characters survive. The emptied source preference row
+        /// is then removed.
+        /// </summary>
+        private static async Task MergePreferences(
+            ServerDbContext ctx,
+            Guid source,
+            Guid target,
+            List<string> summary,
+            CancellationToken cancel)
+        {
+            var srcPref = await ctx.Preference.Include(p => p.Profiles)
+                .SingleOrDefaultAsync(p => p.UserId == source, cancel);
+            if (srcPref == null)
+                return;
+
+            var tgtPref = await ctx.Preference.Include(p => p.Profiles)
+                .SingleOrDefaultAsync(p => p.UserId == target, cancel);
+
+            // Target has no preferences yet: just adopt the source's wholesale.
+            if (tgtPref == null)
+            {
+                srcPref.UserId = target;
+                await ctx.SaveChangesAsync(cancel);
+                summary.Add($"characters: {srcPref.Profiles.Count}");
+                return;
+            }
+
+            var nextSlot = tgtPref.Profiles.Count == 0 ? 0 : tgtPref.Profiles.Max(p => p.Slot) + 1;
+            var moved = 0;
+            foreach (var profile in srcPref.Profiles.OrderBy(p => p.Slot).ToList())
+            {
+                // Re-parent the character onto the target's preference at a fresh slot. Its Jobs/Antags/
+                // Traits/Loadouts are keyed by ProfileId (unchanged), so they follow automatically.
+                profile.Slot = nextSlot++;
+                profile.PreferenceId = tgtPref.Id;
+                profile.Preference = tgtPref;
+                tgtPref.Profiles.Add(profile);
+                moved++;
+            }
+            srcPref.Profiles.Clear();
+            await ctx.SaveChangesAsync(cancel);
+
+            // The source preference row is now empty; drop it (don't cascade-delete the moved characters).
+            ctx.Preference.Remove(srcPref);
+            await ctx.SaveChangesAsync(cancel);
+
+            if (moved > 0)
+                summary.Add($"characters: {moved}");
+        }
+
+        /// <summary>Merge play times: sum the source's time into the target per tracker, keeping the union.</summary>
+        private static async Task MergePlayTimes(
+            ServerDbContext ctx,
+            Guid source,
+            Guid target,
+            List<string> summary,
+            CancellationToken cancel)
+        {
+            var srcTimes = await ctx.PlayTime.Where(p => p.PlayerId == source).ToListAsync(cancel);
+            if (srcTimes.Count == 0)
+                return;
+
+            var tgtByTracker = (await ctx.PlayTime.Where(p => p.PlayerId == target).ToListAsync(cancel))
+                .ToDictionary(t => t.Tracker);
+
+            foreach (var srcTime in srcTimes)
+            {
+                if (tgtByTracker.TryGetValue(srcTime.Tracker, out var tgtTime))
+                {
+                    tgtTime.TimeSpent += srcTime.TimeSpent;
+                    ctx.PlayTime.Remove(srcTime);
+                }
+                else
+                {
+                    // Target lacks this tracker: re-point the source row (no unique conflict).
+                    srcTime.PlayerId = target;
+                }
+            }
+
+            await ctx.SaveChangesAsync(cancel);
+            summary.Add($"playtimes: {srcTimes.Count}");
+        }
+
+        /// <summary>Union role/job whitelists onto the target, dropping any the target already has.</summary>
+        private static async Task MergeRoleWhitelists(
+            ServerDbContext ctx,
+            Guid source,
+            Guid target,
+            List<string> summary,
+            CancellationToken cancel)
+        {
+            var targetRoles = await ctx.RoleWhitelists.Where(w => w.PlayerUserId == target)
+                .Select(w => w.RoleId).ToListAsync(cancel);
+            await ctx.RoleWhitelists.Where(w => w.PlayerUserId == source && targetRoles.Contains(w.RoleId))
+                .ExecuteDeleteAsync(cancel);
+
+            var moved = await ctx.RoleWhitelists.Where(w => w.PlayerUserId == source)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.PlayerUserId, target), cancel);
+            if (moved > 0)
+                summary.Add($"role-whitelists: {moved}");
+        }
+
+        /// <summary>
+        /// Union a presence flag keyed by user GUID (whitelist/blacklist): if the source has it, ensure the
+        /// target has it too, then remove the source's row. The target's row is never dropped.
+        /// </summary>
+        private static async Task MergePkGuidFlag<T>(
+            ServerDbContext ctx,
+            DbSet<T> set,
+            Guid source,
+            Guid target,
+            Func<T> makeTarget,
+            List<string> summary,
+            string label,
+            CancellationToken cancel) where T : class
+        {
+            if (!await set.AnyAsync(BuildUserIdPredicate<T>(source), cancel))
+                return;
+
+            if (!await set.AnyAsync(BuildUserIdPredicate<T>(target), cancel))
+                set.Add(makeTarget());
+
+            await set.Where(BuildUserIdPredicate<T>(source)).ExecuteDeleteAsync(cancel);
+            await ctx.SaveChangesAsync(cancel);
+            summary.Add(label);
+        }
+
+        /// <summary>Merge ban exemptions: OR the source's exempt flags into the target's, then drop the source.</summary>
+        private static async Task MergeBanExemption(
+            ServerDbContext ctx,
+            Guid source,
+            Guid target,
+            List<string> summary,
+            CancellationToken cancel)
+        {
+            var srcEx = await ctx.BanExemption.SingleOrDefaultAsync(e => e.UserId == source, cancel);
+            if (srcEx == null)
+                return;
+
+            var tgtEx = await ctx.BanExemption.SingleOrDefaultAsync(e => e.UserId == target, cancel);
+            if (tgtEx == null)
+                ctx.BanExemption.Add(new ServerBanExemption { UserId = target, Flags = srcEx.Flags });
+            else
+                tgtEx.Flags |= srcEx.Flags;
+
+            ctx.BanExemption.Remove(srcEx);
+            await ctx.SaveChangesAsync(cancel);
+            summary.Add("ban-exemption");
         }
 
         #endregion

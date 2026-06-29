@@ -97,8 +97,9 @@ public sealed partial class UserMigrationManager : IPostInjectInit
 
             if (matched != null)
             {
+                // Merge so nothing the new account already accrued is lost (it's usually empty anyway).
                 var detail = await _db.MigrateUserDataAsync(
-                    matched.UserId.UserId, newUserId.UserId, MigrationScope.Auto, cancel);
+                    matched.UserId.UserId, newUserId.UserId, MigrationScope.Auto, merge: true, cancel);
 
                 await _db.AddMigrationLogAsync(NewLog(
                     matched, newUserId, userName, automatic: true,
@@ -138,6 +139,7 @@ public sealed partial class UserMigrationManager : IPostInjectInit
         LocatedPlayerData source,
         LocatedPlayerData target,
         MigrationScope scope,
+        bool merge,
         NetUserId admin)
     {
         if (source.UserId == target.UserId)
@@ -149,7 +151,7 @@ public sealed partial class UserMigrationManager : IPostInjectInit
         if (_players.TryGetSessionById(source.UserId, out _))
             return new MigrationOutcome(false, Loc.GetString("migration-error-source-online"));
 
-        var detail = await _db.MigrateUserDataAsync(source.UserId.UserId, target.UserId.UserId, scope);
+        var detail = await _db.MigrateUserDataAsync(source.UserId.UserId, target.UserId.UserId, scope, merge);
 
         await _db.AddMigrationLogAsync(new MigrationLog
         {
@@ -180,7 +182,8 @@ public sealed partial class UserMigrationManager : IPostInjectInit
         if (_players.TryGetSessionById(new NetUserId(log.TargetUserId), out _))
             return new MigrationOutcome(false, Loc.GetString("migration-error-target-online"));
 
-        var detail = await _db.MigrateUserDataAsync(log.SourceUserId, log.TargetUserId, log.Scope);
+        // Merge when approving so any data on the (possibly active) new account isn't discarded.
+        var detail = await _db.MigrateUserDataAsync(log.SourceUserId, log.TargetUserId, log.Scope, merge: true);
         await _db.UpdateMigrationLogStatusAsync(logId, MigrationStatus.Completed, admin.UserId, detail);
 
         _sawmill.Info($"{admin} approved pending migration #{logId} ({log.SourceUserId} -> {log.TargetUserId}): {detail}");

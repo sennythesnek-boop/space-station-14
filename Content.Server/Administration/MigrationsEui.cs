@@ -169,11 +169,11 @@ public sealed partial class MigrationsEui : BaseEui
                     return;
                 }
 
-                var result = await _migration.PerformManualAsync(source, target, scope, Player.UserId);
+                var result = await _migration.PerformManualAsync(source, target, scope, manual.Merge, Player.UserId);
                 _lastResult = result.Message;
                 if (result.Success)
                     _adminLog.Add(LogType.Action, LogImpact.High,
-                        $"{Player:actor} migrated data from {source.Username} ({source.UserId}) to {target.Username} ({target.UserId}) [{scope}]: {result.Message}");
+                        $"{Player:actor} migrated data from {source.Username} ({source.UserId}) to {target.Username} ({target.UserId}) [{scope}, {(manual.Merge ? "merge" : "replace")}]: {result.Message}");
                 Load();
                 break;
             }
