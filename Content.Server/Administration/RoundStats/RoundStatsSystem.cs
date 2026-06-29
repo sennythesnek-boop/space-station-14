@@ -1,3 +1,6 @@
+using System.Linq;
+using System.Text.Json;
+using Content.Server.GameTicking;
 using Content.Shared.Administration;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Components;
@@ -5,8 +8,10 @@ using Content.Shared.Damage.Systems;
 using Content.Shared.FixedPoint;
 using Content.Shared.GameTicking;
 using Content.Shared.Mobs;
+using Robust.Shared.ContentPack;
 using Robust.Shared.Player;
 using Robust.Shared.Network;
+using Robust.Shared.Utility;
 
 namespace Content.Server.Administration.RoundStats;
 
@@ -19,12 +24,28 @@ namespace Content.Server.Administration.RoundStats;
 /// DeathMatch game mode). Damage is attributed via <see cref="DamageChangedEvent.Origin"/>; kills are
 /// attributed on death to the finishing-blow origin, falling back to the largest cumulative damage source.
 /// </remarks>
-public sealed class RoundStatsSystem : EntitySystem
+public sealed partial class RoundStatsSystem : EntitySystem
 {
+    [Dependency] private IResourceManager _res = default!;
+
+    private static readonly ResPath Dir = new("/combat_stats");
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
+
     private readonly Dictionary<NetUserId, PlayerCombatStats> _stats = new();
 
     /// <summary>Damage dealt to each victim by each player during that victim's current life (kill attribution).</summary>
     private readonly Dictionary<EntityUid, Dictionary<NetUserId, FixedPoint2>> _damageToVictim = new();
+
+    /// <summary>The round id the current in-memory stats belong to (captured while combat happens).</summary>
+    private int _roundId;
+
+    private GameTicker? _ticker;
+    private GameTicker Ticker => _ticker ??= EntityManager.System<GameTicker>();
+
+    /// <summary>The id of the round currently in progress.</summary>
+    public int CurrentRoundId => Ticker.RoundId;
+
+    private static ResPath FilePath(int round) => new($"/combat_stats/round_{round}.json");
 
     public override void Initialize()
     {
@@ -37,12 +58,19 @@ public sealed class RoundStatsSystem : EntitySystem
 
     private void OnRoundRestart(RoundRestartCleanupEvent ev)
     {
+        // Persist the just-ended round's stats to disk before clearing, so it can be browsed later.
+        SaveCurrentRound();
+
         _stats.Clear();
         _damageToVictim.Clear();
+        _roundId = 0;
     }
 
     private PlayerCombatStats Get(NetUserId id)
     {
+        // Remember which round these in-memory stats belong to (for persistence at round end).
+        _roundId = CurrentRoundId;
+
         if (!_stats.TryGetValue(id, out var s))
             _stats[id] = s = new PlayerCombatStats();
         return s;
@@ -150,6 +178,116 @@ public sealed class RoundStatsSystem : EntitySystem
         }
 
         return result;
+    }
+
+    /// <summary>Rounds that have combat stats available: every saved round plus the current one, newest first.</summary>
+    public List<int> GetAvailableRounds()
+    {
+        var rounds = new HashSet<int>();
+
+        if (_res.UserData.Exists(Dir))
+        {
+            foreach (var entry in _res.UserData.DirectoryEntries(Dir))
+            {
+                if (TryParseRound(entry, out var id))
+                    rounds.Add(id);
+            }
+        }
+
+        // Always allow viewing the live current round.
+        var current = CurrentRoundId;
+        if (current > 0)
+            rounds.Add(current);
+
+        return rounds.OrderByDescending(r => r).ToList();
+    }
+
+    /// <summary>Stats for a round: the live in-memory set for the current round, or the saved snapshot for a past one.</summary>
+    public List<CombatStatEntry> GetRoundStats(int roundId)
+    {
+        if (roundId == CurrentRoundId)
+            return BuildEntries();
+
+        var path = FilePath(roundId);
+        if (!_res.UserData.Exists(path))
+            return new List<CombatStatEntry>();
+
+        try
+        {
+            using var reader = _res.UserData.OpenText(path);
+            var stored = JsonSerializer.Deserialize<List<StoredStat>>(reader.ReadToEnd(), JsonOpts);
+            if (stored == null)
+                return new List<CombatStatEntry>();
+
+            return stored
+                .Select(s => new CombatStatEntry(
+                    s.OocName,
+                    s.CharacterName,
+                    s.KillsPlayers,
+                    s.KillsTotal,
+                    s.DamagePlayers,
+                    s.DamageTotal,
+                    s.Deaths))
+                .ToList();
+        }
+        catch (Exception e)
+        {
+            Log.Error($"Failed to read combat stats for round {roundId}: {e}");
+            return new List<CombatStatEntry>();
+        }
+    }
+
+    private void SaveCurrentRound()
+    {
+        if (_stats.Count == 0 || _roundId <= 0)
+            return;
+
+        var stored = BuildEntries()
+            .Select(e => new StoredStat
+            {
+                OocName = e.OocName,
+                CharacterName = e.CharacterName,
+                KillsPlayers = e.KillsPlayers,
+                KillsTotal = e.KillsTotal,
+                DamagePlayers = e.DamagePlayers,
+                DamageTotal = e.DamageTotal,
+                Deaths = e.Deaths,
+            })
+            .ToList();
+
+        try
+        {
+            _res.UserData.CreateDir(Dir);
+            using var writer = _res.UserData.OpenWriteText(FilePath(_roundId));
+            writer.Write(JsonSerializer.Serialize(stored, JsonOpts));
+        }
+        catch (Exception e)
+        {
+            Log.Error($"Failed to save combat stats for round {_roundId}: {e}");
+        }
+    }
+
+    private static bool TryParseRound(string fileName, out int round)
+    {
+        round = 0;
+        // Expecting "round_<id>.json".
+        if (!fileName.StartsWith("round_", StringComparison.Ordinal) ||
+            !fileName.EndsWith(".json", StringComparison.Ordinal))
+            return false;
+
+        var idPart = fileName["round_".Length..^".json".Length];
+        return int.TryParse(idPart, out round);
+    }
+
+    private sealed class StoredStat
+    {
+        public string OocName { get; set; } = string.Empty;
+        public string CharacterName { get; set; } = string.Empty;
+        public int KillsPlayers { get; set; }
+        public int KillsTotal { get; set; }
+        public float DamagePlayers { get; set; }
+        public float DamageTotal { get; set; }
+        public int Deaths { get; set; }
     }
 
     private sealed class PlayerCombatStats

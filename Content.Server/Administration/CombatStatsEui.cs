@@ -12,7 +12,9 @@ public sealed partial class CombatStatsEui : BaseEui
     [Dependency] private IAdminManager _admins = default!;
     [Dependency] private IEntityManager _entity = default!;
 
-    private CombatStatsEuiState _state = new(new());
+    private CombatStatsEuiState _state = new(0, 0, new(), new());
+
+    private int? _selectedRound;
 
     public CombatStatsEui()
     {
@@ -49,7 +51,16 @@ public sealed partial class CombatStatsEui : BaseEui
             return;
         }
 
-        _state = new CombatStatsEuiState(_entity.System<RoundStatsSystem>().BuildEntries());
+        var system = _entity.System<RoundStatsSystem>();
+        var current = system.CurrentRoundId;
+        var available = system.GetAvailableRounds();
+        var selected = _selectedRound ?? current;
+
+        // If the selected round is no longer available (e.g. its file was removed), fall back to current.
+        if (!available.Contains(selected))
+            selected = current;
+
+        _state = new CombatStatsEuiState(current, selected, available, system.GetRoundStats(selected));
         StateDirty();
     }
 
@@ -57,7 +68,15 @@ public sealed partial class CombatStatsEui : BaseEui
     {
         base.HandleMessage(msg);
 
-        if (msg is CombatStatsRefreshMessage)
-            BuildState();
+        switch (msg)
+        {
+            case CombatStatsSelectRoundMessage select:
+                _selectedRound = select.RoundId;
+                BuildState();
+                break;
+            case CombatStatsRefreshMessage:
+                BuildState();
+                break;
+        }
     }
 }

@@ -14,8 +14,12 @@ namespace Content.Client.Administration.UI.CombatStats;
 public sealed partial class CombatStatsWindow : FancyWindow
 {
     public event Action? OnRefresh;
+    public event Action<int>? OnSelectRound;
 
     private List<CombatStatEntry> _entries = new();
+    private List<int> _rounds = new();
+    private int _selectedRound;
+    private bool _updatingRounds;
     private int _sortColumn = 4; // Damage (total)
     private bool _descending = true;
 
@@ -23,13 +27,64 @@ public sealed partial class CombatStatsWindow : FancyWindow
     {
         RobustXamlLoader.Load(this);
         RefreshButton.OnPressed += _ => OnRefresh?.Invoke();
+
+        RoundOption.OnItemSelected += args =>
+        {
+            RoundOption.SelectId(args.Id);
+            if (!_updatingRounds && args.Id < _rounds.Count)
+                OnSelectRound?.Invoke(_rounds[args.Id]);
+        };
+
+        PrevRoundButton.OnPressed += _ => Step(1); // older round
+        NextRoundButton.OnPressed += _ => Step(-1); // newer round
     }
 
     public void SetState(CombatStatsEuiState state)
     {
         _entries = state.Entries;
+
+        // Populate the round selector (newest first); flag suppresses the selection callback while we set it.
+        _updatingRounds = true;
+        RoundOption.Clear();
+        _rounds = state.AvailableRounds;
+        for (var i = 0; i < _rounds.Count; i++)
+        {
+            var round = _rounds[i];
+            var text = round == state.CurrentRound
+                ? Loc.GetString("combat-stats-round-current", ("round", round))
+                : Loc.GetString("combat-stats-round", ("round", round));
+            RoundOption.AddItem(text, i);
+            if (round == state.SelectedRound)
+                RoundOption.SelectId(i);
+        }
+        _updatingRounds = false;
+
+        _selectedRound = state.SelectedRound;
+        UpdateRoundButtons();
+
         CountLabel.Text = Loc.GetString("combat-stats-count", ("count", _entries.Count));
         Rebuild();
+    }
+
+    private void Step(int delta)
+    {
+        var idx = _rounds.IndexOf(_selectedRound);
+        if (idx < 0)
+            return;
+
+        var target = idx + delta;
+        if (target < 0 || target >= _rounds.Count)
+            return;
+
+        OnSelectRound?.Invoke(_rounds[target]);
+    }
+
+    private void UpdateRoundButtons()
+    {
+        // _rounds is newest-first: the older round is further down the list, the newer one further up.
+        var idx = _rounds.IndexOf(_selectedRound);
+        PrevRoundButton.Disabled = idx < 0 || idx + 1 >= _rounds.Count;
+        NextRoundButton.Disabled = idx <= 0;
     }
 
     private void Rebuild()

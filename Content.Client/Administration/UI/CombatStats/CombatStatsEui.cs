@@ -14,6 +14,7 @@ public sealed class CombatStatsEui : BaseEui
     {
         _window = new CombatStatsWindow();
         _window.OnRefresh += () => SendMessage(new CombatStatsRefreshMessage());
+        _window.OnSelectRound += round => SendMessage(new CombatStatsSelectRoundMessage(round));
         _window.OnClose += () => SendMessage(new CloseEuiMessage());
     }
 
