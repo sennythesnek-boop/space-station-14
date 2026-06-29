@@ -179,6 +179,7 @@
   physicalDesc: reagent-physical-desc-fizzy
   flavor: medicine
   color: "#0091ff"
+  worksOnTheDead: true # Cryo heals dead (ported from Goob)
   plantMetabolism:
   - !type:PlantAdjustToxins
     amount: -5
@@ -208,6 +209,7 @@
   physicalDesc: reagent-physical-desc-bubbling
   flavor: medicine
   color: "#32cd32"
+  worksOnTheDead: true # Cryo heals dead (ported from Goob)
   metabolisms:
     Bloodstream:
       effects:
