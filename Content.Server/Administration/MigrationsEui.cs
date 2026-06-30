@@ -65,10 +65,10 @@ public sealed partial class MigrationsEui : BaseEui
         return _admins.HasAdminFlag(Player, AdminFlags.Moderator);
     }
 
-    /// <summary>Migrating admin rank/flags is gated behind the full Admin flag to prevent escalation.</summary>
+    /// <summary>Migrating admin rank/flags is gated behind the Permissions flag to prevent escalation.</summary>
     private bool CanMigrateAdmin()
     {
-        return _admins.HasAdminFlag(Player, AdminFlags.Admin);
+        return _admins.HasAdminFlag(Player, AdminFlags.Permissions);
     }
 
     public async void Load()

@@ -46,8 +46,8 @@ public sealed partial class RoleReqEditorEui : BaseEui
             BuildState();
     }
 
-    private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
-    private bool CanEdit() => _admins.HasAdminFlag(Player, AdminFlags.Admin);
+    private bool CanView() => _admins.HasAdminFlag(Player, AdminFlags.Server);
+    private bool CanEdit() => _admins.HasAdminFlag(Player, AdminFlags.Server);
 
     public override EuiStateBase GetNewState() => _state;
 

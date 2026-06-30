@@ -2,6 +2,17 @@ Name: Changelog
 Order: 0
 Entries:
 - author: issyman182
+  version: iss14:1.6.1
+  time: '2026-06-30'
+  changes:
+  - message: Executions with guns — ready a firearm against someone's head for a point-blank kill, or turn it on yourself.
+    type: Add
+  - message: Cryo pods now treat the dead. Cryoxadone and Doxarubixadone keep working on a dead patient, so a body left in a cryo pod can be healed back to revivable.
+    type: Tweak
+  - message: Fixed Text-To-Speech voices overlapping and talking over each other.
+    type: Fix
+  id: 10
+- author: issyman182
   version: iss14:1.6.0
   time: '2026-06-28'
   changes:

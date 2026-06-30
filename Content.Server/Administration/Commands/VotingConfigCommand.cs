@@ -4,7 +4,7 @@ using Robust.Shared.Console;
 
 namespace Content.Server.Administration.Commands;
 
-[AdminCommand(AdminFlags.Admin)]
+[AdminCommand(AdminFlags.Server)]
 public sealed partial class VotingConfigCommand : LocalizedCommands
 {
     [Dependency] private EuiManager _euis = default!;

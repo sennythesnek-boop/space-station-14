@@ -3,6 +3,17 @@ Order: 3
 AdminOnly: true
 Entries:
 - author: issyman182
+  version: iss14:1.6.1
+  time: '2026-06-30'
+  changes:
+  - message: The Combat Stats panel now keeps a per-round history — browse kills, damage and deaths for previous rounds, not just the current one.
+    type: Add
+  - message: The admin menu (F7) now opens for any staff rank that holds at least one permission, showing only the tools that rank is allowed to use (previously required the full Admin flag).
+    type: Tweak
+  - message: The role time requirement editor, voting config and New Life config panels now require the Server flag (moved off Admin). User-data migrations need the Moderator flag, and transferring admin permissions specifically now requires the Permissions flag.
+    type: Tweak
+  id: 9
+- author: issyman182
   version: iss14:1.6.0
   time: '2026-06-28'
   changes:

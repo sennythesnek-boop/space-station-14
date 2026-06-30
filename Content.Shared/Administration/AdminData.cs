@@ -59,7 +59,7 @@ namespace Content.Shared.Administration
         /// </summary>
         public bool CanAdminMenu()
         {
-            return HasFlag(AdminFlags.Admin);
+            return Active && Flags != AdminFlags.None;
         }
 
         /// <summary>
