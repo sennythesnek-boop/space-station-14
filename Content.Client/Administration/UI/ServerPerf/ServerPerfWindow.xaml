@@ -1,0 +1,49 @@
+<ui:FancyWindow xmlns="https://spacestation14.io"
+                xmlns:ui="clr-namespace:Content.Client.UserInterface.Controls"
+                xmlns:sp="clr-namespace:Content.Client.Administration.UI.ServerPerf"
+                Title="{Loc server-perf-title}"
+                MinSize="520 520"
+                SetSize="560 620">
+    <PanelContainer StyleClasses="BackgroundDark">
+        <BoxContainer Orientation="Vertical" Margin="8">
+            <PanelContainer Name="StatusPanel" Margin="0 0 0 8">
+                <Label Name="StatusLabel" Align="Center" StyleClasses="LabelBig" Margin="0 4" />
+            </PanelContainer>
+
+            <GridContainer Columns="4" HorizontalExpand="True" Margin="0 0 0 8">
+                <Label Text="{Loc server-perf-tps}" StyleClasses="LabelSubText" />
+                <Label Name="TpsValue" />
+                <Label Text="{Loc server-perf-tick-time}" StyleClasses="LabelSubText" />
+                <Label Name="TickValue" />
+
+                <Label Text="{Loc server-perf-late-ticks}" StyleClasses="LabelSubText" />
+                <Label Name="LateValue" />
+                <Label Text="{Loc server-perf-cpu}" StyleClasses="LabelSubText" />
+                <Label Name="CpuValue" />
+
+                <Label Text="{Loc server-perf-memory}" StyleClasses="LabelSubText" />
+                <Label Name="MemoryValue" />
+                <Label Text="{Loc server-perf-gc}" StyleClasses="LabelSubText" />
+                <Label Name="GcValue" />
+
+                <Label Text="{Loc server-perf-entities}" StyleClasses="LabelSubText" />
+                <Label Name="EntitiesValue" />
+                <Label Text="{Loc server-perf-players}" StyleClasses="LabelSubText" />
+                <Label Name="PlayersValue" />
+
+                <Label Text="{Loc server-perf-net}" StyleClasses="LabelSubText" />
+                <Label Name="NetValue" />
+                <Label Text="{Loc server-perf-uptime}" StyleClasses="LabelSubText" />
+                <Label Name="UptimeValue" />
+            </GridContainer>
+
+            <Label Text="{Loc server-perf-graph-tick}" StyleClasses="LabelHeading" />
+            <sp:PerfGraph Name="TickGraph" MinHeight="160" VerticalExpand="True" HorizontalExpand="True" Margin="0 2 0 2" />
+            <Label Name="TickLegend" StyleClasses="LabelSubText" Margin="0 0 0 8" />
+
+            <Label Text="{Loc server-perf-graph-cpu}" StyleClasses="LabelHeading" />
+            <sp:PerfGraph Name="CpuGraph" MinHeight="90" HorizontalExpand="True" Margin="0 2 0 2" />
+            <Label Name="CpuLegend" StyleClasses="LabelSubText" />
+        </BoxContainer>
+    </PanelContainer>
+</ui:FancyWindow>
