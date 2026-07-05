@@ -202,7 +202,10 @@ public abstract partial class SharedBorgSystem
             {
                 if (module.Comp.StoredItems.TryGetValue(handId, out var storedItem))
                 {
-                    item = storedItem;
+                    if (TerminatingOrDeleted(storedItem))
+                        module.Comp.StoredItems.Remove(handId);
+                    else
+                        item = storedItem;
                     // DoPickup handles removing the item from the container.
                 }
             }
@@ -214,6 +217,13 @@ public abstract partial class SharedBorgSystem
             if (item is { } pickUp)
             {
                 _hands.DoPickup(chassis, handId, pickUp, hands);
+
+                // DoPickup can fail silently. If the item never made it into the hand, leave the
+                // StoredItems entry pointing at it so the next select retries instead of the next
+                // unselect orphaning it in the holding container.
+                if (!_hands.TryGetHeldItem((chassis.Owner, hands), handId, out var newHeld) || newHeld != pickUp)
+                    continue;
+
                 if (!hand.ForceRemovable && hand.Hand.Whitelist == null && hand.Hand.Blacklist == null)
                 {
                     EnsureComp<UnremoveableComponent>(pickUp);
@@ -246,11 +256,23 @@ public abstract partial class SharedBorgSystem
             if (_hands.TryGetHeldItem((chassis.Owner, hands), handId, out var held))
             {
                 RemComp<UnremoveableComponent>(held.Value);
-                _container.Insert(held.Value, container);
-                module.Comp.StoredItems[handId] = held.Value;
+                if (_container.Insert(held.Value, container))
+                {
+                    module.Comp.StoredItems[handId] = held.Value;
+                }
+                else
+                {
+                    // Couldn't stow the item. Force it out of the hand so RemoveHand's container
+                    // shutdown doesn't delete it - dropping it at the borg's feet is recoverable.
+                    module.Comp.StoredItems.Remove(handId);
+                    if (_container.TryGetContainer(chassis, handId, out var handContainer))
+                        _container.Remove(held.Value, handContainer, force: true);
+                }
             }
-            else
+            else if (!module.Comp.StoredItems.TryGetValue(handId, out var stored) || !container.Contains(stored))
             {
+                // Only forget the stored item if it isn't actually sitting in the holding container
+                // (e.g. after a failed restore) - otherwise it would be orphaned in there forever.
                 module.Comp.StoredItems.Remove(handId);
             }
 

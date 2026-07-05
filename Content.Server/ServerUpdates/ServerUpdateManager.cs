@@ -37,6 +37,11 @@ public sealed partial class ServerUpdateManager : IPostInjectInit
 
     private TimeSpan _uptimeRestart;
 
+    private int _roundsBeforeRestart;
+
+    [ViewVariables]
+    private int _roundsCompleted;
+
     public void Initialize()
     {
         _watchdog.UpdateReceived += WatchdogOnUpdateReceived;
@@ -45,6 +50,11 @@ public sealed partial class ServerUpdateManager : IPostInjectInit
         _cfg.OnValueChanged(
             CCVars.ServerUptimeRestartMinutes,
             minutes => _uptimeRestart = TimeSpan.FromMinutes(minutes),
+            true);
+
+        _cfg.OnValueChanged(
+            CCVars.ServerRoundsBeforeRestart,
+            rounds => _roundsBeforeRestart = rounds,
             true);
     }
 
@@ -72,7 +82,9 @@ public sealed partial class ServerUpdateManager : IPostInjectInit
     /// <returns>True if the server is going to restart.</returns>
     public bool RoundEnded()
     {
-        if (_updateOnRoundEnd || ShouldShutdownDueToUptime())
+        _roundsCompleted += 1;
+
+        if (_updateOnRoundEnd || ShouldShutdownDueToUptime() || ShouldShutdownDueToRounds())
         {
             DoShutdown();
             return true;
@@ -135,13 +147,24 @@ public sealed partial class ServerUpdateManager : IPostInjectInit
     private void DoShutdown()
     {
         _sawmill.Debug($"Shutting down via {nameof(ServerUpdateManager)}!");
-        var reason = _updateOnRoundEnd ? "server-updates-shutdown" : "server-updates-shutdown-uptime";
+        string reason;
+        if (_updateOnRoundEnd)
+            reason = "server-updates-shutdown";
+        else if (ShouldShutdownDueToRounds())
+            reason = "server-updates-shutdown-rounds";
+        else
+            reason = "server-updates-shutdown-uptime";
         _server.Shutdown(Loc.GetString(reason));
     }
 
     private bool ShouldShutdownDueToUptime()
     {
         return _uptimeRestart != TimeSpan.Zero && _gameTiming.RealTime > _uptimeRestart;
+    }
+
+    private bool ShouldShutdownDueToRounds()
+    {
+        return _roundsBeforeRestart > 0 && _roundsCompleted >= _roundsBeforeRestart;
     }
 
     void IPostInjectInit.PostInject()

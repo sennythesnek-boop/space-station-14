@@ -42,6 +42,16 @@ public sealed partial class CCVars
         CVarDef.Create("server.uptime_restart_minutes", 0, CVar.SERVERONLY);
 
     /// <summary>
+    ///     If greater than 0, automatically restart the server after this many rounds have ended.
+    /// </summary>
+    /// <remarks>
+    ///     Like <see cref="ServerUptimeRestartMinutes"/>, the shutdown happens non-disruptively at round end.
+    ///     The process exits cleanly, so the service manager (systemd, watchdog) must be configured to restart it.
+    /// </remarks>
+    public static readonly CVarDef<int> ServerRoundsBeforeRestart =
+        CVarDef.Create("server.rounds_before_restart", 0, CVar.SERVERONLY);
+
+    /// <summary>
     ///     This will be the title shown in the lobby
     ///     If empty, the title will be {ui-lobby-title} + the server's full name from the hub
     /// </summary>
